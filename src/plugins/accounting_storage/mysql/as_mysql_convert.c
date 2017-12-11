@@ -39,7 +39,10 @@
 #include "as_mysql_convert.h"
 
 /* Any time you have to add to an existing convert update this number. */
-#define CONVERT_VERSION 4
+#define CONVERT_VERSION 4 /*
+			   * 4 marked the end of converts in 17.11.  Just a
+			   * note.
+			   */
 
 /*
  * Defined globally because it's used in 2 functions:
