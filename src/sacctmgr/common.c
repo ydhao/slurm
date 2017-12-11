@@ -1746,6 +1746,16 @@ extern void sacctmgr_print_assoc_limits(slurmdb_assoc_rec_t *assoc)
 	else if (assoc->max_jobs != NO_VAL)
 		printf("  MaxJobs       = %u\n", assoc->max_jobs);
 
+	if (assoc->max_jobs_prio == INFINITE)
+		printf("  MaxJobsPrio   = NONE\n");
+	else if (assoc->max_jobs_prio != NO_VAL)
+		printf("  MaxJobsPrio   = %u\n", assoc->max_jobs_prio);
+
+	if (assoc->max_prio_thresh == INFINITE)
+		printf("  MaxPrioThresh = NONE\n");
+	else if (assoc->max_prio_thresh != NO_VAL)
+		printf("  MaxPrioThresh = %u\n", assoc->max_prio_thresh);
+
 	if (assoc->max_submit_jobs == INFINITE)
 		printf("  MaxSubmitJobs = NONE\n");
 	else if (assoc->max_submit_jobs != NO_VAL)
