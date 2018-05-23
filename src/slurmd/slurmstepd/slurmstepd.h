@@ -72,4 +72,6 @@ extern int stepd_cleanup(slurm_msg_t *msg, stepd_step_rec_t *job,
 
 extern void close_slurmd_conn(void);
 
+extern char *bug5203_test;
+
 #endif /* !_SLURMSTEPD_H */
