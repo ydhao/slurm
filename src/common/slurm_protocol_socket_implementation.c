@@ -185,11 +185,17 @@ ssize_t slurm_msg_sendto_timeout(int fd, char *buffer, size_t size,
 
 	if ((len = slurm_send_timeout(
 				fd, (char *)&usize, sizeof(usize), 0,
-				timeout)) < 0)
+				timeout)) < 0) {
+		error("%s: failed to send message body size: len:%d %m",
+		      __func__, len);
 		goto done;
+	}
 
-	if ((len = slurm_send_timeout(fd, buffer, size, 0, timeout)) < 0)
+	if ((len = slurm_send_timeout(fd, buffer, size, 0, timeout)) < 0) {
+		error("%s: failed to send message body: len:%d %m",
+		      __func__, len);
 		goto done;
+	}
 
 
      done:

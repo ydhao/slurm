@@ -3906,7 +3906,7 @@ int slurm_send_node_msg(int fd, slurm_msg_t * msg)
 			       SLURM_PROTOCOL_NO_SEND_RECV_FLAGS );
 
 	if ((rc < 0) && (errno == ENOTCONN)) {
-		debug3("slurm_msg_sendto: peer has disappeared for msg_type=%u",
+		error("slurm_msg_sendto: peer has disappeared for msg_type=%u",
 		       msg->msg_type);
 	} else if (rc < 0) {
 		slurm_addr_t peer_addr;
@@ -3918,7 +3918,7 @@ int slurm_send_node_msg(int fd, slurm_msg_t * msg)
 			      "msg_type=%u: %m",
 			      addr_str, msg->msg_type);
 		} else if (errno == ENOTCONN)
-			debug3("slurm_msg_sendto: peer has disappeared "
+			error("slurm_msg_sendto: peer has disappeared "
 			       "for msg_type=%u",
 			       msg->msg_type);
 		else
@@ -4537,6 +4537,7 @@ int slurm_send_only_node_msg(slurm_msg_t *req)
 	}
 
 	if ((rc = slurm_send_node_msg(fd, req)) < 0) {
+		error("%s: rc: %d (%m)", __func__, rc);
 		rc = SLURM_ERROR;
 	} else {
 		debug3("slurm_send_only_node_msg: sent %d", rc);
@@ -4546,6 +4547,8 @@ int slurm_send_only_node_msg(slurm_msg_t *req)
 	 *  Attempt to close an open connection
 	 */
 	while ( (slurm_shutdown_msg_conn(fd) < 0) && (errno == EINTR) ) {
+		error("%s: failed to close fd:%d rc:%d retry:%d (%m)",
+		      __func__, fd, rc, retry);
 		if (retry++ > MAX_SHUTDOWN_RETRY)
 			return SLURM_SOCKET_ERROR;
 	}
