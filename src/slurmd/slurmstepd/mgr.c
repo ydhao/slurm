@@ -235,8 +235,14 @@ _send_srun_resp_msg(slurm_msg_t *resp_msg, uint32_t nnodes)
 	wait_for_resumed(resp_msg->msg_type);
 	while (1) {
 		rc = slurm_send_only_node_msg(resp_msg);
-		if ((rc == SLURM_SUCCESS) || (errno != ETIMEDOUT))
+		if (rc == SLURM_SUCCESS)
 			break;
+
+		if ((errno != ETIMEDOUT) && (errno != ENOTCONN)) {
+			error("%s: failed to send srun resp msg rc:%d (%m)",
+			      __func__, rc);
+			break;
+		}
 
 		if (!max_retry)
 			max_retry = (nnodes / 1024) + 5;
