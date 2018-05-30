@@ -235,9 +235,10 @@ extern int slurm_send_timeout(int fd, char *buf, size_t size,
 		}
 
 		if ((rc = poll(&ufds, 1, timeleft)) <= 0) {
-			if ((rc == 0) || (errno == EINTR) || (errno == EAGAIN))
+			if ((rc == 0) || (errno == EINTR) || (errno == EAGAIN)) {
+				error("%s: try again", __func__);
  				continue;
-			else {
+			} else {
 				debug("slurm_send_timeout at %d of %zd, "
 					"poll error: %s",
 					sent, size, strerror(errno));
@@ -255,7 +256,12 @@ extern int slurm_send_timeout(int fd, char *buf, size_t size,
 		 * nonblocking read means just that.
 		 */
 		if (ufds.revents & POLLERR) {
-			debug("slurm_send_timeout: Socket POLLERR");
+			int so_error;
+			socklen_t len = sizeof(so_error);
+			getsockopt(fd, SOL_SOCKET, SO_ERROR,
+				   (void *) &so_error, &len);
+			error("slurm_send_timeout: Socket POLLERR, %d",
+			      so_error);
 			slurm_seterrno(ENOTCONN);
 			sent = SLURM_ERROR;
 			goto done;
