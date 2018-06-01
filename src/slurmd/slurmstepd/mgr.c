@@ -238,8 +238,7 @@ _send_srun_resp_msg(slurm_msg_t *resp_msg, uint32_t nnodes)
 		if (rc == SLURM_SUCCESS)
 			break;
 
-		if ((errno != ETIMEDOUT) && (errno != ENOTCONN)
-		    && (errno != SLURM_SOCKET_ERROR)) {
+		if ((errno != ETIMEDOUT) && (errno != ENOTCONN)) {
 			error("%s: failed to send srun resp msg rc:%d (%m)",
 			      __func__, rc);
 			break;
