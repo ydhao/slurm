@@ -186,14 +186,14 @@ ssize_t slurm_msg_sendto_timeout(int fd, char *buffer, size_t size,
 	if ((len = slurm_send_timeout(
 				fd, (char *)&usize, sizeof(usize), 0,
 				timeout)) < 0) {
-		error("%s: failed to send message body size: len:%d %m",
-		      __func__, len);
+		debug3("%s: failed to send message body size: len:%d %m",
+		       __func__, len);
 		goto done;
 	}
 
 	if ((len = slurm_send_timeout(fd, buffer, size, 0, timeout)) < 0) {
-		error("%s: failed to send message body: len:%d %m",
-		      __func__, len);
+		debug3("%s: failed to send message body: len:%d %m",
+		       __func__, len);
 		goto done;
 	}
 
@@ -236,7 +236,7 @@ extern int slurm_send_timeout(int fd, char *buf, size_t size,
 
 		if ((rc = poll(&ufds, 1, timeleft)) <= 0) {
 			if ((rc == 0) || (errno == EINTR) || (errno == EAGAIN)) {
-				error("%s: try again", __func__);
+				debug3("%s: try again", __func__);
  				continue;
 			} else {
 				debug("slurm_send_timeout at %d of %zd, "
@@ -260,8 +260,8 @@ extern int slurm_send_timeout(int fd, char *buf, size_t size,
 			socklen_t len = sizeof(so_error);
 			getsockopt(fd, SOL_SOCKET, SO_ERROR,
 				   (void *) &so_error, &len);
-			error("slurm_send_timeout: Socket POLLERR, %d",
-			      so_error);
+			debug3("slurm_send_timeout: Socket POLLERR, %d",
+			       so_error);
 			slurm_seterrno(ENOTCONN);
 			sent = SLURM_ERROR;
 			goto done;

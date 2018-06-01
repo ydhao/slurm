@@ -240,7 +240,7 @@ _send_srun_resp_msg(slurm_msg_t *resp_msg, uint32_t nnodes)
 
 		if ((errno != ETIMEDOUT) && (errno != ENOTCONN) &&
 		    (errno != ECONNRESET)) {
-			error("%s: failed to send srun resp msg rc:%d (%m)",
+			debug("%s: failed to send srun resp msg rc:%d (%m)",
 			      __func__, rc);
 			break;
 		}
@@ -248,7 +248,7 @@ _send_srun_resp_msg(slurm_msg_t *resp_msg, uint32_t nnodes)
 		if (!max_retry)
 			max_retry = (nnodes / 1024) + 5;
 
-		error("%s: %d/%d failed to send msg type %u: %m",
+		debug("%s: %d/%d failed to send msg type %u: %m",
 		      __func__, retry, max_retry, resp_msg->msg_type);
 
 		if (retry >= max_retry)
