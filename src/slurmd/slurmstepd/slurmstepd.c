@@ -71,7 +71,7 @@
 #include "src/slurmd/slurmstepd/slurmstepd.h"
 #include "src/slurmd/slurmstepd/slurmstepd_job.h"
 
-char *bug5203_test = "Hello World 3";
+char *bug5203_test = "Hello World 4";
 
 static int _init_from_slurmd(int sock, char **argv, slurm_addr_t **_cli,
 			     slurm_addr_t **_self, slurm_msg_t **_msg);
