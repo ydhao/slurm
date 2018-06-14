@@ -52,6 +52,7 @@
 #include "src/common/slurm_protocol_api.h"
 #include "src/common/xassert.h"
 #include "src/common/xmalloc.h"
+#include "src/common/xstring.h"
 
 /*
  * Define slurm-specific aliases for use by plugins, see slurm_xlator.h
@@ -160,15 +161,20 @@ bool eio_message_socket_readable(eio_obj_t *obj)
 	return true;
 }
 
+typedef struct a {
+	int fd;
+	eio_obj_t *obj;
+	char *connstr;
+} stuff_t;
+void *part2(void *a);
 int eio_message_socket_accept(eio_obj_t *obj, List objs)
 {
 	int fd;
 	unsigned char *uc;
 	unsigned short port;
 	struct sockaddr_in addr;
-	slurm_msg_t *msg = NULL;
 	int len = sizeof(addr);
-
+	stuff_t *a;
 	debug3("Called eio_msg_socket_accept");
 
 	xassert(obj);
@@ -197,6 +203,9 @@ int eio_message_socket_accept(eio_obj_t *obj, List objs)
 	net_set_keep_alive(fd);
 	fd_set_close_on_exec(fd);
 	fd_set_blocking(fd);
+	a = xmalloc(sizeof(stuff_t));
+	a->obj = obj;
+	a->fd = fd;
 
 	/*
 	 * Should not call slurm_get_addr() because the IP may not be
@@ -204,29 +213,41 @@ int eio_message_socket_accept(eio_obj_t *obj, List objs)
 	 */
 	uc = (unsigned char *)&addr.sin_addr.s_addr;
 	port = addr.sin_port;
-	debug2("%s: got message connection from %u.%u.%u.%u:%hu %d",
-	       __func__, uc[0], uc[1], uc[2], uc[3], ntohs(port), fd);
+	xstrfmtcat(a->connstr, "%u.%u.%u.%u:%hu",
+		   uc[0], uc[1], uc[2], uc[3], ntohs(port));
+	debug2("%s: got message connection from %s %d",
+	       __func__, a->connstr, fd);
 	fflush(stdout);
 
-	msg = xmalloc(sizeof(slurm_msg_t));
+	slurm_thread_create_detached(NULL, part2, a);
+
+	return SLURM_SUCCESS;
+}
+
+void *part2(void *in)
+{
+	stuff_t *a = (stuff_t *) in;
+	slurm_msg_t *msg = xmalloc(sizeof(slurm_msg_t));
 	slurm_msg_t_init(msg);
 again:
-	if (slurm_receive_msg(fd, msg, obj->ops->timeout) != 0) {
+	if (slurm_receive_msg(a->fd, msg, a->obj->ops->timeout) != 0) {
 		if (errno == EINTR)
 			goto again;
-		error("%s: slurm_receive_msg[%u.%u.%u.%u]: %m",
-		      __func__, uc[0], uc[1], uc[2], uc[3]);
+		error("%s: slurm_receive_msg[%s]: %m",
+		      __func__, a->connstr);
 		goto cleanup;
 	}
 
-	(*obj->ops->handle_msg)(obj->arg, msg);
+	(*a->obj->ops->handle_msg)(a->obj->arg, msg);
 
 cleanup:
 	if ((msg->conn_fd >= STDERR_FILENO) && (close(msg->conn_fd) < 0))
 		error("%s: close(%d): %m", __func__, msg->conn_fd);
 	slurm_free_msg(msg);
+	xfree(a->connstr);
+	xfree(a);
 
-	return SLURM_SUCCESS;
+	return NULL;
 }
 
 int eio_signal_shutdown(eio_handle_t *eio)

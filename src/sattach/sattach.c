@@ -568,6 +568,7 @@ _exit_handler(message_thread_state_t *mts, slurm_msg_t *exit_msg)
 static void
 _handle_msg(void *arg, slurm_msg_t *msg)
 {
+	static pthread_mutex_t handle_msg_mutex = PTHREAD_MUTEX_INITIALIZER;
 	static uid_t slurm_uid;
 	static bool slurm_uid_set = false;
 	message_thread_state_t *mts = (message_thread_state_t *)arg;
@@ -589,6 +590,7 @@ _handle_msg(void *arg, slurm_msg_t *msg)
 		return;
 	}
 
+	slurm_mutex_lock(&handle_msg_mutex);
 	switch (msg->msg_type) {
 	case RESPONSE_LAUNCH_TASKS:
 		debug2("received task launch");
@@ -607,6 +609,7 @@ _handle_msg(void *arg, slurm_msg_t *msg)
 		      msg->msg_type);
 		break;
 	}
+	slurm_mutex_unlock(&handle_msg_mutex);
 	return;
 }
 

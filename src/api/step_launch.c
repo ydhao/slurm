@@ -1580,6 +1580,7 @@ _task_user_managed_io_handler(struct step_launch_state *sls,
 static void
 _handle_msg(void *arg, slurm_msg_t *msg)
 {
+	static pthread_mutex_t handle_msg_mutex = PTHREAD_MUTEX_INITIALIZER;
 	char *auth_info = slurm_get_auth_info();
 	struct step_launch_state *sls = (struct step_launch_state *)arg;
 	uid_t req_uid;
@@ -1596,6 +1597,7 @@ _handle_msg(void *arg, slurm_msg_t *msg)
  		return;
 	}
 
+	slurm_mutex_lock(&handle_msg_mutex);
 	switch (msg->msg_type) {
 	case RESPONSE_LAUNCH_TASKS:
 		debug2("received task launch");
@@ -1655,6 +1657,7 @@ _handle_msg(void *arg, slurm_msg_t *msg)
 		      __func__, msg->msg_type);
 		break;
 	}
+	slurm_mutex_unlock(&handle_msg_mutex);
 	return;
 }
 
