@@ -4209,8 +4209,14 @@ static int _rpc_file_bcast(slurm_msg_t *msg)
 	if (!cred_arg)
 		return ESLURMD_INVALID_JOB_CREDENTIAL;
 
-	/* FIXME: This needs to get the parent of a het job on a CRAY */
+#ifdef HAVE_NATIVE_CRAY
+	if (cred_arg->pack_jobid && (cred_arg->pack_jobid != NO_VAL))
+		key.job_id = cred_arg->pack_jobid;
+	else
+		key.job_id = cred_arg->job_id;
+#else
 	key.job_id = cred_arg->job_id;
+#endif
 
 #if 0
 	info("last_block=%u force=%u modes=%o",
