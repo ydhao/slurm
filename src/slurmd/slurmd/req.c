@@ -5188,13 +5188,9 @@ _rpc_abort_job(slurm_msg_t *msg)
 	_run_epilog(&job_env);
 
 #ifdef HAVE_NATIVE_CRAY
-	/*
-	 * FIXME: This pack_jobid isn't sent.  Perhaps handle it in the caller
-	 * instead of doing it here.
-	 */
-	/* if (req->pack_jobid && (req->pack_jobid != NO_VAL)) */
-	/* 	jobid = req->pack_jobid; */
-	/* else */
+	if (req->pack_jobid && (req->pack_jobid != NO_VAL))
+		jobid = req->pack_jobid;
+	else
 		jobid = req->job_id;
 #else
 	jobid = req->job_id;
@@ -5209,7 +5205,8 @@ _rpc_abort_job(slurm_msg_t *msg)
 
 /* This is a variant of _rpc_terminate_job for use with select/serial */
 static void
-_rpc_terminate_batch_job(uint32_t job_id, uint32_t user_id, char *node_name)
+_rpc_terminate_batch_job(uint32_t job_id, uint32_t pack_jobid,
+			 uint32_t user_id, char *node_name)
 {
 	int             rc     = SLURM_SUCCESS;
 	int             nsteps = 0;
@@ -5255,7 +5252,7 @@ _rpc_terminate_batch_job(uint32_t job_id, uint32_t user_id, char *node_name)
 		slurm_cred_begin_expiration(conf->vctx, job_id);
 		save_cred_state(conf->vctx);
 		_waiter_complete(job_id);
-		if (container_g_delete(job_id))
+		if (container_g_delete(pack_jobid ? pack_jobid : job_id))
 			error("container_g_delete(%u): %m", job_id);
 		_launch_complete_rm(job_id);
 		return;
@@ -5305,7 +5302,7 @@ _rpc_terminate_batch_job(uint32_t job_id, uint32_t user_id, char *node_name)
 		      job_id, exit_status, term_sig);
 	} else
 		debug("completed epilog for jobid %u", job_id);
-	if (container_g_delete(job_id))
+	if (container_g_delete(pack_jobid ? pack_jobid : job_id))
 		error("container_g_delete(%u): %m", job_id);
 	_launch_complete_rm(job_id);
 
@@ -5364,14 +5361,14 @@ _rpc_complete_batch(slurm_msg_t *msg)
 
 	slurm_send_rc_msg(msg, SLURM_SUCCESS);
 
-	/*
-	 * FIXME: This pack_jobid isn't sent.  Perhaps handle it in the caller
-	 * instead of doing it here.
-	 */
-
 	if (running_serial) {
+		uint32_t pack_jobid = 0;
+#ifdef HAVE_NATIVE_CRAY
+		if (req->pack_jobid && (req->pack_jobid != NO_VAL))
+			pack_jobid = req->pack_jobid;
+#endif
 		_rpc_terminate_batch_job(
-			req->job_id, req->user_id, req->node_name);
+			req->job_id, pack_jobid, req->user_id, req->node_name);
 		msg_type = REQUEST_COMPLETE_BATCH_JOB;
 	} else
 		msg_type = msg->msg_type;
@@ -5434,6 +5431,7 @@ _rpc_terminate_job(slurm_msg_t *msg)
 //	slurm_ctl_conf_t *cf;
 //	struct stat	stat_buf;
 	job_env_t       job_env;
+	uint32_t        jobid;
 
 	debug("_rpc_terminate_job, uid = %d", uid);
 	/*
@@ -5446,6 +5444,16 @@ _rpc_terminate_job(slurm_msg_t *msg)
 			slurm_send_rc_msg(msg, ESLURM_USER_ID_MISSING);
 		return;
 	}
+
+	/* Use this when dealing with the job container */
+#ifdef HAVE_NATIVE_CRAY
+	if (req->pack_jobid && (req->pack_jobid != NO_VAL))
+		jobid = req->pack_jobid;
+	else
+		jobid = req->job_id;
+#else
+	jobid = req->job_id;
+#endif
 
 	task_g_slurmd_release_resources(req->job_id);
 
@@ -5568,6 +5576,7 @@ _rpc_terminate_job(slurm_msg_t *msg)
 	 *    systems, so this bypass can not be used.
 	 */
 	if ((nsteps == 0) && !conf->epilog && !have_spank) {
+
 		debug4("sent ALREADY_COMPLETE");
 		if (msg->conn_fd >= 0) {
 			slurm_send_rc_msg(msg,
@@ -5590,7 +5599,8 @@ _rpc_terminate_job(slurm_msg_t *msg)
 			 * ESLURMD_KILL_JOB_ALREADY_COMPLETE reply above */
 			_epilog_complete(req->job_id, rc);
 		}
-		if (container_g_delete(req->job_id))
+
+		if (container_g_delete(jobid))
 			error("container_g_delete(%u): %m", req->job_id);
 		_launch_complete_rm(req->job_id);
 		return;
@@ -5659,7 +5669,7 @@ _rpc_terminate_job(slurm_msg_t *msg)
 		rc = ESLURMD_EPILOG_FAILED;
 	} else
 		debug("completed epilog for jobid %u", req->job_id);
-	if (container_g_delete(req->job_id))
+	if (container_g_delete(jobid))
 		error("container_g_delete(%u): %m", req->job_id);
 	_launch_complete_rm(req->job_id);
 
