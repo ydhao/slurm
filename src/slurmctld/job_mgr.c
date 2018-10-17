@@ -17810,6 +17810,8 @@ set_remote_working_response(resource_allocation_response_msg_t *resp,
 					slurmctld_conf.slurmctld_port;
 				response_cluster_rec->rpc_version =
 					SLURM_PROTOCOL_VERSION;
+				response_cluster_rec->plugin_id_select =
+					select_get_plugin_id();
 			}
 			resp->working_cluster_rec = response_cluster_rec;
 		}

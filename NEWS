@@ -30,6 +30,7 @@ documents those changes that are of interest to users and administrators.
     /proc/sys/kernel/pid_max.
  -- Fix --parsable2 output for sacct and sstat commands to remove a stray
     trailing delimiter.
+ -- Fix multi-cluster srun's with Select/Cray and other_cons_res.
 
 * Changes in Slurm 18.08.1
 ==========================
