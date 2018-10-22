@@ -2605,7 +2605,13 @@ static void _update_step_record(job_step_info_t *step_ptr,
 	slurm_make_time_str((time_t *)&step_ptr->start_time, tmp_time_start,
 			    sizeof(tmp_time_start));
 
-	snprintf(tmp_step_id, sizeof(tmp_step_id), "%u", step_ptr->step_id);
+	if (step_ptr->step_id == SLURM_PENDING_STEP)
+		snprintf(tmp_step_id, sizeof(tmp_step_id), "TBD");
+	else if (step_ptr->step_id == SLURM_EXTERN_CONT)
+		snprintf(tmp_step_id, sizeof(tmp_step_id), "Extern");
+	else
+		snprintf(tmp_step_id, sizeof(tmp_step_id), "%u", step_ptr->step_id);
+
 	if (step_ptr->array_job_id) {
 		snprintf(tmp_job_id, sizeof(tmp_job_id), "%u_%u.%u (%u.%u)",
 			 step_ptr->array_job_id, step_ptr->array_task_id,
@@ -2617,8 +2623,8 @@ static void _update_step_record(job_step_info_t *step_ptr,
 //			 step_ptr->step_id,
 //			 step_ptr->job_id, step_ptr->step_id);
 	} else {
-		snprintf(tmp_job_id, sizeof(tmp_job_id), "%u.%u",
-			 step_ptr->job_id, step_ptr->step_id);
+		snprintf(tmp_job_id, sizeof(tmp_job_id), "%u.%s",
+			 step_ptr->job_id, tmp_step_id);
 	}
 
 	tmp_uname = uid_to_string_cached((uid_t)step_ptr->user_id);
