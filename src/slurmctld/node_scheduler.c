@@ -2299,6 +2299,7 @@ static void _preempt_jobs(List preemptee_job_list, bool kill_pending,
 			if (slurm_job_check_grace(job_ptr, preemptor_ptr)
 			    == SLURM_SUCCESS)
 				continue;
+			send_job_warn_signal(job_ptr, true);
 			rc = job_signal(job_ptr, SIGKILL, 0, 0, true);
 			if (rc == SLURM_SUCCESS) {
 				info("preempted %pJ has been killed to reclaim resources for %pJ",
@@ -2328,6 +2329,7 @@ static void _preempt_jobs(List preemptee_job_list, bool kill_pending,
 			job_cnt++;
 			if (!kill_pending)
 				continue;
+			send_job_warn_signal(job_ptr, true);
 			rc = job_requeue(0, job_ptr->job_id, NULL, true, 0);
 			if (rc == SLURM_SUCCESS) {
 				info("preempted %pJ has been requeued to reclaim resources for %pJ",
@@ -2349,6 +2351,7 @@ static void _preempt_jobs(List preemptee_job_list, bool kill_pending,
 				== SLURM_SUCCESS))
 				continue;
 
+			send_job_warn_signal(job_ptr, true);
 			rc = job_signal(job_ptr, SIGKILL, 0, 0, true);
 			if (rc == SLURM_SUCCESS) {
 				info("%s: preempted %pJ had to be killed",

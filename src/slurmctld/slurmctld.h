@@ -2718,7 +2718,8 @@ extern bool valid_tres_name(char *name);
  * Send warning signal to job before end time.
  *
  * IN job_ptr - job to send warn signal to.
+ * IN ignore_time - If set, ignore the warn time and just send it.
  */
-extern void send_job_warn_signal(struct job_record *job_ptr);
+extern void send_job_warn_signal(struct job_record *job_ptr, bool ignore_time);
 
 #endif /* !_HAVE_SLURMCTLD_H */
