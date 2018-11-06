@@ -2752,6 +2752,7 @@ typedef struct slurm_ctl_conf {
 	char *power_plugin;	/* power management plugin type */
 	uint16_t preempt_mode;	/* See PREEMPT_MODE_* in slurm/slurm.h */
 	char *preempt_type;	/* job preemption selection plugin */
+	uint32_t priority_age_min_time; /* minimum time for priority_age_time */
 	uint32_t priority_decay_hl; /* priority decay half life in
 				     * seconds */
 	uint32_t priority_calc_period; /* seconds between priority decay
@@ -2761,11 +2762,13 @@ typedef struct slurm_ctl_conf {
 				  * see PRIORITY_FLAGS_* above */
 	uint32_t priority_max_age; /* time when not to add any more
 				    * priority to a job if reached */
+	double priority_max_age_time; /* maximum priority_age_time */
     	char *priority_params;	/* priority plugin parameters */
 	uint16_t priority_reset_period; /* when to clear usage,
 					 * see PRIORITY_RESET_* */
 	char *priority_type;    /* priority type plugin */
 	uint32_t priority_weight_age; /* weight for age factor */
+	uint32_t priority_weight_age_time; /* weight for AgeTime factor */
 	uint32_t priority_weight_fs; /* weight for Fairshare factor */
 	uint32_t priority_weight_js; /* weight for Job Size factor */
 	uint32_t priority_weight_part; /* weight for Partition factor */

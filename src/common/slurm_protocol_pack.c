@@ -6283,15 +6283,18 @@ _pack_slurm_ctl_conf_msg(slurm_ctl_conf_info_msg_t * build_ptr, Buf buffer,
 		pack16(build_ptr->preempt_mode, buffer);
 		packstr(build_ptr->preempt_type, buffer);
 
+		pack32(build_ptr->priority_age_min_time, buffer);
 		pack32(build_ptr->priority_decay_hl, buffer);
 		pack32(build_ptr->priority_calc_period, buffer);
 		pack16(build_ptr->priority_favor_small, buffer);
 		pack16(build_ptr->priority_flags, buffer);
 		pack32(build_ptr->priority_max_age, buffer);
+		packdouble(build_ptr->priority_max_age_time, buffer);
 		packstr(build_ptr->priority_params, buffer);
 		pack16(build_ptr->priority_reset_period, buffer);
 		packstr(build_ptr->priority_type, buffer);
 		pack32(build_ptr->priority_weight_age, buffer);
+		pack32(build_ptr->priority_weight_age_time, buffer);
 		pack32(build_ptr->priority_weight_fs, buffer);
 		pack32(build_ptr->priority_weight_js, buffer);
 		pack32(build_ptr->priority_weight_part, buffer);
@@ -7182,17 +7185,20 @@ _unpack_slurm_ctl_conf_msg(slurm_ctl_conf_info_msg_t **build_buffer_ptr,
 		safe_unpackstr_xmalloc(&build_ptr->preempt_type,
 				       &uint32_tmp, buffer);
 
+		safe_unpack32(&build_ptr->priority_age_min_time, buffer);
 		safe_unpack32(&build_ptr->priority_decay_hl, buffer);
 		safe_unpack32(&build_ptr->priority_calc_period, buffer);
 		safe_unpack16(&build_ptr->priority_favor_small, buffer);
 		safe_unpack16(&build_ptr->priority_flags, buffer);
 		safe_unpack32(&build_ptr->priority_max_age, buffer);
+		safe_unpackdouble(&build_ptr->priority_max_age_time, buffer);
 		safe_unpackstr_xmalloc(&build_ptr->priority_params, &uint32_tmp,
 				       buffer);
 		safe_unpack16(&build_ptr->priority_reset_period, buffer);
 		safe_unpackstr_xmalloc(&build_ptr->priority_type, &uint32_tmp,
 				       buffer);
 		safe_unpack32(&build_ptr->priority_weight_age, buffer);
+		safe_unpack32(&build_ptr->priority_weight_age_time, buffer);
 		safe_unpack32(&build_ptr->priority_weight_fs, buffer);
 		safe_unpack32(&build_ptr->priority_weight_js, buffer);
 		safe_unpack32(&build_ptr->priority_weight_part, buffer);
