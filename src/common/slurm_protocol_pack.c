@@ -2745,6 +2745,7 @@ static void _pack_priority_factors_object(void *in, Buf buffer,
 			packdouble(0, buffer);
 			packdouble(0, buffer);
 			packdouble(0, buffer);
+			packdouble(0, buffer);
 
 			pack32(0, buffer);
 			packnull(buffer);
@@ -2756,6 +2757,7 @@ static void _pack_priority_factors_object(void *in, Buf buffer,
 		pack32(object->user_id, buffer);
 
 		packdouble(object->priority_age, buffer);
+		packdouble(object->priority_age_time, buffer);
 		packdouble(object->priority_fs, buffer);
 		packdouble(object->priority_js, buffer);
 		packdouble(object->priority_part, buffer);
@@ -2827,6 +2829,7 @@ static int _unpack_priority_factors_object(void **object, Buf buffer,
 		safe_unpack32(&object_ptr->user_id, buffer);
 
 		safe_unpackdouble(&object_ptr->priority_age, buffer);
+		safe_unpackdouble(&object_ptr->priority_age_time, buffer);
 		safe_unpackdouble(&object_ptr->priority_fs, buffer);
 		safe_unpackdouble(&object_ptr->priority_js, buffer);
 		safe_unpackdouble(&object_ptr->priority_part, buffer);

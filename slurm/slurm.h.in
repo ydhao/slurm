@@ -1726,6 +1726,7 @@ typedef struct priority_factors_object {
 	uint32_t user_id;
 
 	double	 priority_age;
+	double	 priority_age_time;
 	double	 priority_fs;
 	double	 priority_js;
 	double	 priority_part;
