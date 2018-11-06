@@ -2807,6 +2807,9 @@ static void _pack_priority_factors_object(void *in, Buf buffer,
 
 		pack32(object->nice, buffer);
 		packstr(object->partition, buffer);
+	} else {
+		error("%s: protocol_version %hu not supported", __func__,
+		      protocol_version);
 	}
 }
 
@@ -2861,6 +2864,10 @@ static int _unpack_priority_factors_object(void **object, Buf buffer,
 		safe_unpack32(&object_ptr->nice, buffer);
 		safe_unpackstr_xmalloc(&object_ptr->partition, &tmp32,
 				       buffer);
+	} else {
+		error("%s: protocol_version %hu not supported", __func__,
+		      protocol_version);
+		goto unpack_error;
 	}
 
 	return SLURM_SUCCESS;
