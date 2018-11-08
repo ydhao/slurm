@@ -137,8 +137,11 @@ static bool favor_small; /* favor small jobs over large */
 static uint16_t damp_factor = 1;  /* weight for age factor */
 static uint32_t max_age; /* time when not to add any more
 			  * priority to a job if reached */
+static double max_age_time; /* maximum pre-weighted age / time quotient */
+static uint32_t age_min_time; /* minimum TimeLimit considered for AgeTime */
 static uint16_t enforce;     /* AccountingStorageEnforce */
 static uint32_t weight_age;  /* weight for age factor */
+static uint32_t weight_age_time; /* weight for AgeTime factor */
 static uint32_t weight_fs;   /* weight for Fairshare factor */
 static uint32_t weight_js;   /* weight for Job Size factor */
 static uint32_t weight_part; /* weight for Partition factor */
@@ -539,6 +542,7 @@ static uint32_t _get_priority_internal(time_t start_time,
 		memset(&pre_factors, 0, sizeof(priority_factors_object_t));
 
 	job_ptr->prio_factors->priority_age  *= (double)weight_age;
+	job_ptr->prio_factors->priority_age_time *= (double)weight_age_time;
 	job_ptr->prio_factors->priority_fs   *= (double)weight_fs;
 	job_ptr->prio_factors->priority_js   *= (double)weight_js;
 	job_ptr->prio_factors->priority_part *= (double)weight_part;
@@ -556,6 +560,7 @@ static uint32_t _get_priority_internal(time_t start_time,
 	}
 
 	priority = job_ptr->prio_factors->priority_age
+		+ job_ptr->prio_factors->priority_age_time
 		+ job_ptr->prio_factors->priority_fs
 		+ job_ptr->prio_factors->priority_js
 		+ job_ptr->prio_factors->priority_part
@@ -596,6 +601,7 @@ static uint32_t _get_priority_internal(time_t start_time,
 				(double)weight_part;
 			priority_part +=
 				 (job_ptr->prio_factors->priority_age
+				 + job_ptr->prio_factors->priority_age_time
 				 + job_ptr->prio_factors->priority_fs
 				 + job_ptr->prio_factors->priority_js
 				 + job_ptr->prio_factors->priority_qos
@@ -640,6 +646,9 @@ static uint32_t _get_priority_internal(time_t start_time,
 		info("Weighted Age priority is %f * %u = %.2f",
 		     pre_factors.priority_age, weight_age,
 		     job_ptr->prio_factors->priority_age);
+		info("Weighted AgeTime priority is %f * %u = %.2f",
+		     pre_factors.priority_age_time, weight_age_time,
+		     job_ptr->prio_factors->priority_age_time);
 		info("Weighted Fairshare priority is %f * %u = %.2f",
 		     pre_factors.priority_fs, weight_fs,
 		     job_ptr->prio_factors->priority_fs);
@@ -666,9 +675,9 @@ static uint32_t _get_priority_internal(time_t start_time,
 			assoc_mgr_unlock(&locks);
 		}
 
-		info("Job %u priority: %.2f + %.2f + %.2f + %.2f + %.2f + %2.f "
-		     "- %"PRId64" = %.2f",
+		info("Job %u priority: %.2f + %.2f + %.2f + %.2f + %.2f + %.2f + %2.f - %"PRId64" = %.2f",
 		     job_ptr->job_id, job_ptr->prio_factors->priority_age,
+		     job_ptr->prio_factors->priority_age_time,
 		     job_ptr->prio_factors->priority_fs,
 		     job_ptr->prio_factors->priority_js,
 		     job_ptr->prio_factors->priority_part,
@@ -1466,11 +1475,14 @@ static void _internal_setup(void)
 	else
 		priority_debug = 0;
 
+	age_min_time = slurm_get_priority_age_min_time();
 	favor_small = slurm_get_priority_favor_small();
 	damp_factor = (long double)slurm_get_fs_dampening_factor();
 	enforce = slurm_get_accounting_storage_enforce();
 	max_age = slurm_get_priority_max_age();
+	max_age_time = slurm_get_priority_max_age_time();
 	weight_age = slurm_get_priority_weight_age();
+	weight_age_time = slurm_get_priority_weight_age_time();
 	weight_fs = slurm_get_priority_weight_fairshare();
 	weight_js = slurm_get_priority_weight_job_size();
 	weight_part = slurm_get_priority_weight_partition();
@@ -1485,10 +1497,13 @@ static void _internal_setup(void)
 	flags = slurm_get_priority_flags();
 
 	if (priority_debug) {
-		info("priority: Damp Factor is %u", damp_factor);
 		info("priority: AccountingStorageEnforce is %u", enforce);
+		info("priority: AgeMinTime is %u", age_min_time);
+		info("priority: Damp Factor is %u", damp_factor);
 		info("priority: Max Age is %u", max_age);
+		info("priority: Max Age / Time is %f", max_age_time);
 		info("priority: Weight Age is %u", weight_age);
+		info("priority: Weight AgeTime is %u", weight_age_time);
 		info("priority: Weight Fairshare is %u", weight_fs);
 		info("priority: Weight JobSize is %u", weight_js);
 		info("priority: Weight Part is %u", weight_part);
@@ -2017,6 +2032,42 @@ extern void set_priority_factors(time_t start_time, struct job_record *job_ptr)
 	}
 
 	qos_ptr = job_ptr->qos_ptr;
+
+	if (weight_age_time && job_ptr->details->accrue_time) {
+		uint32_t delta = 0, tmp_time = 1;
+		double quotient = 0.0;
+
+		/*
+		 * Only really add an AgeTime priority if the
+		 * job_ptr->details->accrue_time is past the start_time.
+		 */
+		if (start_time > job_ptr->details->accrue_time)
+			delta = start_time - job_ptr->details->accrue_time;
+
+		if (delta) {
+			if (job_ptr->time_limit != NO_VAL)
+				tmp_time = job_ptr->time_limit;
+			else if (job_ptr->part_ptr &&
+				 (job_ptr->part_ptr->max_time != INFINITE))
+				tmp_time = job_ptr->part_ptr->max_time;
+
+			/*
+			 * Job time_limit and partition max_time are internally
+			 * represented in minutes. Convert to seconds since
+			 * delta and PriorityAgeMinTime are already in seconds.
+			 */
+			tmp_time *= 60;
+			tmp_time = MAX(tmp_time, age_min_time);
+			quotient = (double)delta / (double)tmp_time;
+
+			if (quotient < max_age_time)
+				job_ptr->prio_factors->priority_age_time =
+					(double)quotient / (double)max_age_time;
+			else
+				job_ptr->prio_factors->priority_age_time = 1.0;
+		} else
+			job_ptr->prio_factors->priority_age_time = 0.0;
+	}
 
 	if (weight_age && job_ptr->details->accrue_time) {
 		uint32_t diff = 0;

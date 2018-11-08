@@ -237,17 +237,20 @@ slurm_ctl_conf_to_hv(slurm_ctl_conf_t *conf, HV *hv)
 	if (conf->preempt_type)
 		STORE_FIELD(hv, conf, preempt_type, charp);
 
+	STORE_FIELD(hv, conf, priority_age_min_time, uint32_t);
 	STORE_FIELD(hv, conf, priority_calc_period, uint32_t);
 	STORE_FIELD(hv, conf, priority_decay_hl, uint32_t);
 	STORE_FIELD(hv, conf, priority_favor_small, uint16_t);
 	STORE_FIELD(hv, conf, priority_flags, uint16_t);
 	STORE_FIELD(hv, conf, priority_max_age, uint32_t);
+	STORE_FIELD(hv, conf, priority_max_age_time, double);
 	if (conf->priority_params)
 		STORE_FIELD(hv, conf, priority_params, charp);
 	STORE_FIELD(hv, conf, priority_reset_period, uint16_t);
 	if (conf->priority_type)
 		STORE_FIELD(hv, conf, priority_type, charp);
 	STORE_FIELD(hv, conf, priority_weight_age, uint32_t);
+	STORE_FIELD(hv, conf, priority_weight_age_time, uint32_t);
 	STORE_FIELD(hv, conf, priority_weight_fs, uint32_t);
 	STORE_FIELD(hv, conf, priority_weight_js, uint32_t);
 	STORE_FIELD(hv, conf, priority_weight_part, uint32_t);
@@ -541,16 +544,19 @@ hv_to_slurm_ctl_conf(HV *hv, slurm_ctl_conf_t *conf)
 	FETCH_FIELD(hv, conf, power_parameters, charp, FALSE);
 	FETCH_FIELD(hv, conf, preempt_mode, uint16_t, TRUE);
 	FETCH_FIELD(hv, conf, preempt_type, charp, FALSE);
+	FETCH_FIELD(hv, conf, priority_age_min_time, uint32_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_calc_period, uint32_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_decay_hl, uint32_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_favor_small, uint16_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_flags, uint16_t, FALSE);
 	FETCH_FIELD(hv, conf, priority_max_age, uint32_t, TRUE);
+	FETCH_FIELD(hv, conf, priority_max_age_time, double, TRUE);
 	FETCH_FIELD(hv, conf, priority_params, charp, FALSE);
 	FETCH_FIELD(hv, conf, priority_reset_period, uint16_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_type, charp, FALSE);
 
 	FETCH_FIELD(hv, conf, priority_weight_age, uint32_t, TRUE);
+	FETCH_FIELD(hv, conf, priority_weight_age_time, uint32_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_weight_fs, uint32_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_weight_js, uint32_t, TRUE);
 	FETCH_FIELD(hv, conf, priority_weight_part, uint32_t, TRUE);

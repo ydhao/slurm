@@ -140,6 +140,8 @@ extern uint16_t drop_priv_flag;
 #define DEFAULT_PREEMPT_TYPE        "preempt/none"
 #define DEFAULT_PRIORITY_DECAY      604800 /* 7 days */
 #define DEFAULT_PRIORITY_CALC_PERIOD 300 /* in seconds */
+#define DEFAULT_PRIORITY_AGE_MIN_TIME 300 /* in seconds */
+#define DEFAULT_PRIORITY_MAX_AGE_TIME 50.0
 #define DEFAULT_PRIORITY_TYPE       "priority/basic"
 #define DEFAULT_RECONF_KEEP_PART_STATE 0
 #define DEFAULT_RETURN_TO_SERVICE   0

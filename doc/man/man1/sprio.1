@@ -64,10 +64,10 @@ assigned non-zero weights are
 .RS
 .TP 15
 \fIdefault\fR
-"%.15i %9r %.10Y %.10A %.10F %.10J %.10P %.10Q %20T"
+"%.15i %9r %.10Y %.10A %.10B %.10F %.10J %.10P %.10Q %20T"
 .TP
 \fI\-l, \-\-long\fR
-"%.15i %9r %.8u %.10Y %.10A %.10F %.10J %.10P %.10Q %.6N %20T"
+"%.15i %9r %.8u %.10Y %.10A %.10B %.10F %.10J %.10P %.10Q %.6N %20T"
 .RE
 
 .IP
@@ -93,6 +93,11 @@ Normalized age priority
 .TP
 \fB%A\fR
 Weighted age priority
+\fB%b\fR
+Normalized age relative to time priority
+.TP
+\fB%B\fR
+Weighted age relative to time priority
 .TP
 \fB%c\fR
 Cluster name. Only applicable for federated clusters

@@ -66,9 +66,12 @@ FastSchedule=1
 #PriorityUsageResetPeriod=14-0
 #PriorityWeightFairshare=100000
 #PriorityWeightAge=1000
+#PriorityWeightAgeTime=10000
 #PriorityWeightPartition=10000
 #PriorityWeightJobSize=1000
 #PriorityMaxAge=1-0
+#PriorityMaxAgeTime=50.0
+#PriorityAgeMinTime=10
 #
 # LOGGING
 SlurmctldDebug=3

@@ -387,12 +387,15 @@ SelectTypeParameters=CR_Core_Memory
 # JOB PRIORITY
 #PriorityFlags=
 #PriorityType=priority/basic
+#PriorityAgeMinTime=
 #PriorityDecayHalfLife=
 #PriorityCalcPeriod=
 #PriorityFavorSmall=
 #PriorityMaxAge=
+#PriorityMaxAgeTime=
 #PriorityUsageResetPeriod=
 #PriorityWeightAge=
+#PriorityWeightAgeTime=
 #PriorityWeightFairshare=
 #PriorityWeightJobSize=
 #PriorityWeightPartition=

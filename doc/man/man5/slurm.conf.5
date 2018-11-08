@@ -1802,6 +1802,18 @@ A configuration of \fBPreemptMode=SUSPEND\fR is only supported by the
 .RE
 
 .TP
+\fBPriorityAgeMinTime\fR
+Specifies the minimum job TimeLimit value that will be considered in the
+age relative to time priority factor calculations.
+Applicable only if PriorityType=priority/multifactor.
+Format is minutes, minutes:seconds, hours:minutes:seconds, days\-hours,
+days\-hours:minutes or days\-hours:minutes:seconds.
+Time resolution is one minute and second values are rounded up to the next
+minute.
+The default value is 5 minutes.
+See also \fBPriorityWeightAgeTime\fR and \fBPriorityMaxAgeTime\fR.
+
+.TP
 \fBPriorityDecayHalfLife\fR
 This controls how long prior resource use is considered in determining
 how over\- or under\-serviced an association is (user, bank account and
@@ -1882,6 +1894,21 @@ The unit is a time string (i.e. min, hr:min:00, days\-hr:min:00,
 or days\-hr).  The default value is 7\-0 (7 days).
 
 .TP
+\fBPriorityMaxAgeTime\fR
+Specifies the maximum total pre-weighted absolute contribution for the age
+relative to time factor component. When \fBPriorityWeightAgeTime\fR is enabled,
+the priority/multifactor plugin calculates a quotient resulting from the
+division of the job age by its time limit. This parameter is a positive
+floating point number representing the upper bound to the mentioned quotient.
+Since the pre-weighted factors are floating point numbers between 0.0 and 1.0,
+this parameter is the first quotient value mapping to the maximum contribution
+(every other higher value will also be normalized to 1.0).
+The default value is 50.0, which would set the maximum AgeTime contribution to
+those jobs having an age 50 times higher than their time limit.
+Applicable only if PriorityType=priority/multifactor.
+See also \fBPriorityWeightAgeTime\fR and \fBPriorityAgeMinTime\fR.
+
+.TP
 \fBPriorityUsageResetPeriod\fR
 At this interval the usage of associations will be reset to 0.  This is used
 if you want to enforce hard limits of time usage per association.  If
@@ -1947,6 +1974,16 @@ An integer value that sets the degree to which the queue wait time
 component contributes to the job's priority.
 Applicable only if PriorityType=priority/multifactor.
 The default value is 0.
+
+.TP
+\fBPriorityWeightAgeTime\fR
+An integer value that sets the degree to which the queue wait time component
+relative to the TimeLimit contributes to the job's priority.
+This can be useful to favor shorter jobs (in terms of their requested
+TimeLimit).
+Applicable only if PriorityType=priority/multifactor.
+The default value is 0.
+See also \fBPriorityAgeMinTime\fR and \fBPriorityMaxAgeTime\fR.
 
 .TP
 \fBPriorityWeightFairshare\fR

@@ -285,6 +285,12 @@ uint16_t slurm_get_slurmctld_timeout(void);
  */
 char *slurm_get_plugin_dir(void);
 
+/* slurm_get_priority_age_min_time
+ * returns the priority age min time in seconds from slurmctld_conf object
+ * RET uint32_t - age_min_time in secs.
+ */
+uint32_t slurm_get_priority_age_min_time(void);
+
 /* slurm_get_priority_decay_hl
  * returns the priority decay half life in seconds from slurmctld_conf object
  * RET uint32_t - decay_hl in secs.
@@ -315,6 +321,12 @@ uint16_t slurm_get_priority_flags(void);
  */
 uint32_t slurm_get_priority_max_age(void);
 
+/* slurm_get_priority_max_age_time
+ * returns the priority max age / time from slurmctld_conf object
+ * RET double - max_age_time.
+ */
+double slurm_get_priority_max_age_time(void);
+
 /* slurm_get_priority_params
  * RET char * - Value of PriorityParameters, MUST be xfreed by caller */
 char *slurm_get_priority_params(void);
@@ -336,6 +348,12 @@ char *slurm_get_priority_type(void);
  * RET uint32_t - factor weight.
  */
 uint32_t slurm_get_priority_weight_age(void);
+
+/* slurm_get_priority_weight_age_time
+ * returns the priority weight for agetime from slurmctld_conf object
+ * RET uint32_t - factor weight.
+ */
+uint32_t slurm_get_priority_weight_age_time(void);
 
 /* slurm_get_priority_weight_fairshare
  * returns the priority weight for fairshare from slurmctld_conf object

@@ -58,6 +58,7 @@ static int _sort_by_nice_level(void *v1, void *v2);
 static int _sort_by_partition(void *v1, void *v2);
 static int _sort_by_username(void *v1, void *v2);
 static int _sort_by_age_prio(void *v1, void *v2);
+static int _sort_by_age_time_prio(void *v1, void *v2);
 static int _sort_by_fairshare_prio(void *v1, void *v2);
 static int _sort_by_jobsize_prio(void *v1, void *v2);
 static int _sort_by_partition_prio(void *v1, void *v2);
@@ -109,6 +110,10 @@ extern void sort_job_list(List job_list)
 		case 'A': /* sort by age priority */
 		case 'a':
 			list_sort(job_list, _sort_by_age_prio);
+			break;
+		case 'B': /* sort by age time priority */
+		case 'b':
+			list_sort(job_list, _sort_by_age_time_prio);
 			break;
 		case 'F': /* sort by fair share priority */
 		case 'f':
@@ -230,6 +235,17 @@ static int _sort_by_age_prio(void *v1, void *v2)
 	_get_job_prio_from_void(&job1, &job2, v1, v2);
 
 	cmp = _compare_double(job1->priority_age, job2->priority_age);
+	return COND_NEGATE(sort_descend, cmp);
+}
+
+static int _sort_by_age_time_prio(void *v1, void *v2)
+{
+	int cmp;
+	priority_factors_object_t *job1, *job2;
+
+	_get_job_prio_from_void(&job1, &job2, v1, v2);
+
+	cmp = _compare_double(job1->priority_age_time, job2->priority_age_time);
 	return COND_NEGATE(sort_descend, cmp);
 }
 

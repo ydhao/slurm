@@ -313,11 +313,14 @@ int main (int argc, char **argv)
 	/* set up a known environment to test against.  Since we are
 	 * only concerned about the fairshare we won't look at the other
 	 * factors here. */
+	conf->priority_age_min_time = 300;
 	conf->priority_decay_hl = 1;
 	conf->priority_favor_small = 0;
 	conf->priority_max_age = conf->priority_decay_hl;
+	conf->priority_max_age_time = 50.0;
 	conf->priority_reset_period = 0;
 	conf->priority_weight_age = 0;
+	conf->priority_weight_age_time = 0;
 	conf->priority_weight_fs = 10000;
 	conf->priority_weight_js = 0;
 	conf->priority_weight_part = 0;

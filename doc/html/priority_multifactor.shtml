@@ -8,6 +8,7 @@
 <LI> <a href=#mfjppintro>Multi-factor Job Priority Plugin</a>
 <LI> <a href=#general>Job Priority Factors In General</a>
 <LI> <a href=#age>Age Factor</a>
+<LI> <a href=#agetime>AgeTime Factor</a>
 <LI> <a href=#jobsize>Job Size Factor</a>
 <LI> <a href=#partition>Partition Factor</a>
 <LI> <a href=#qos>Quality of Service (QOS) Factor</a>
@@ -32,11 +33,13 @@
 <a name=mfjppintro>
 <h2>Multi-factor 'Factors'</h2></a>
 
-<P> There are six factors in the Multi-factor Job Priority plugin that influence job priority:</P>
+<P> There are seven factors in the Multi-factor Job Priority plugin that influence job priority:</P>
 
 <DL>
 <DT> Age
 <DD> the length of time a job has been waiting in the queue, eligible to be scheduled
+<DT> AgeTime
+<DD> the age relative to the job time limit
 <DT> Fair-share
 <DD> the difference between the portion of the computing resource that has been promised and the amount of resources that has been consumed
 <DT> Job size
@@ -65,6 +68,7 @@ requested/allocated TRES Type in a given partition
 <PRE>
 Job_priority =
 	(PriorityWeightAge) * (age_factor) +
+	(PriorityWeightAgeTime) * (age_time_factor) +
 	(PriorityWeightFairshare) * (fair-share_factor) +
 	(PriorityWeightJobSize) * (job_size_factor) +
 	(PriorityWeightPartition) * (partition_factor) +
@@ -101,6 +105,21 @@ Job_priority =
 <P> At some configurable length of time (<i>PriorityMaxAge</i>), the age factor will max out to 1.0.</P>
 
 <!-------------------------------------------------------------------------->
+<a name=agetime>
+<h2>AgeTime Factor</h2></a>
+
+<P>
+The age relative to time factor is the same age mentioned above but proportional
+to the job time limit. If two jobs have been aging for the same amount of time,
+the one with a shorter time limit will have a higher AgeTime factor.
+
+<P>A minimum configurable time limit to calculate this factor can be defined
+through the <i>PriorityAgeMinTime</i> parameter. The pre-weighted quotient
+contribution resulting from the age by time division will max out at another
+configurable value named <i>PriorityMaxAgeTime</i>.</P>
+
+<!-------------------------------------------------------------------------->
+
 <a name=jobsize>
 <h2>Job Size Factor</h2></a>
 
@@ -516,6 +535,13 @@ factor as it is currently configured.</P>
 <DL>
 <DT> PriorityType
 <DD> Set this value to "priority/multifactor" to enable the Multi-factor Job Priority Plugin.  The default value for this variable is "priority/basic" which enables simple FIFO scheduling.
+<DT> PriorityAgeMinTime
+<DD> Specifies the minimum job TimeLimit value that will be considered in the
+age relative to time priority factor calculations. Applicable only if
+PriorityType=priority/multifactor.  Format is minutes, minutes:seconds,
+hours:minutes:seconds, days-hours, days-hours:minutes or
+days-hours:minutes:seconds. Time resolution is one minute and second values are
+rounded up to the next minute.  The default value is 5 minutes.
 <DT> PriorityDecayHalfLife
 <DD> This determines the contribution of historical usage on the
   composite usage value.  The larger the number, the longer past usage
@@ -556,8 +582,21 @@ factor as it is currently configured.</P>
 <DD> Specifies the queue wait time at which the age factor maxes out.
   The unit is a time string (i.e. min, hr:min:00, days-hr:min:00, or
   days-hr).  The default value is 7-0 (7 days).
+<DT> PriorityMaxAgeTime
+<DD> Specifies the maximum total pre-weighted absolute contribution for the age
+relative to time factor component. When PriorityWeightAgeTime is enabled, the
+priority/multifactor plugin calculates a quotient resulting from the division of
+the job age by its time limit. This parameter is a positive floating point
+number representing the upper bound to the mentioned quotient. Since the
+pre-weighted factors are floating point numbers between 0.0 and 1.0, this
+parameter is the first quotient value mapping to the maximum contribution (every
+other higher value will also be normalized to 1.0).  The default value is 50.0,
+which would set the maximum AgeTime contribution to those jobs having an age 50
+times higher than their time limit.
 <DT> PriorityWeightAge
 <DD> An unsigned integer that scales the contribution of the age factor.
+<DT> PriorityWeightAgeTime
+<DD> An unsigned integer that scales the contribution of the age time factor.
 <DT> PriorityWeightFairshare
 <DD> An unsigned integer that scales the contribution of the fair-share factor.
 <DT> PriorityWeightJobSize
@@ -638,6 +677,6 @@ PriorityWeightQOS=0 # don't use the qos factor
 </PRE>
 
 <!-------------------------------------------------------------------------->
-<p style="text-align:center;">Last modified 1 November 2013</p>
+<p style="text-align:center;">Last modified 8 November 2018</p>
 
 <!--#include virtual="footer.txt"-->

@@ -196,12 +196,15 @@ function displayfile()
    "# JOB PRIORITY <br>" +
    "#PriorityFlags= <br>" +
    "#PriorityType=priority/basic <br>" +
+   "#PriorityAgeMinTime= <br>" +
    "#PriorityDecayHalfLife= <br>" +
    "#PriorityCalcPeriod= <br>" +
    "#PriorityFavorSmall= <br>" +
    "#PriorityMaxAge= <br>" +
+   "#PriorityMaxAgeTime= <br>" +
    "#PriorityUsageResetPeriod= <br>" +
    "#PriorityWeightAge= <br>" +
+   "#PriorityWeightAgeTime= <br>" +
    "#PriorityWeightFairshare= <br>" +
    "#PriorityWeightJobSize= <br>" +
    "#PriorityWeightPartition= <br>" +

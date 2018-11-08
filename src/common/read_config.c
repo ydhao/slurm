@@ -298,15 +298,18 @@ s_p_options_t slurm_conf_options[] = {
 	{"PowerPlugin", S_P_STRING},
 	{"PreemptMode", S_P_STRING},
 	{"PreemptType", S_P_STRING},
+	{"PriorityAgeMinTime", S_P_STRING},
 	{"PriorityDecayHalfLife", S_P_STRING},
 	{"PriorityCalcPeriod", S_P_STRING},
 	{"PriorityFavorSmall", S_P_BOOLEAN},
 	{"PriorityMaxAge", S_P_STRING},
+	{"PriorityMaxAgeTime", S_P_DOUBLE},
 	{"PriorityParameters", S_P_STRING},
 	{"PriorityUsageResetPeriod", S_P_STRING},
 	{"PriorityType", S_P_STRING},
 	{"PriorityFlags", S_P_STRING},
 	{"PriorityWeightAge", S_P_UINT32},
+	{"PriorityWeightAgeTime", S_P_UINT32},
 	{"PriorityWeightFairshare", S_P_UINT32},
 	{"PriorityWeightJobSize", S_P_UINT32},
 	{"PriorityWeightPartition", S_P_UINT32},
@@ -4207,6 +4210,18 @@ _validate_and_set_defaults(slurm_ctl_conf_t *conf, s_p_hashtbl_t *hashtbl)
 		}
 	}
 
+	if (s_p_get_string(&temp_str, "PriorityAgeMinTime", hashtbl)) {
+		int age_min_time = time_str2mins(temp_str);
+		if ((age_min_time < 0) && (age_min_time != INFINITE)) {
+			error("Bad value \"%s\" for PriorityAgeMinTime",
+			      temp_str);
+			return SLURM_ERROR;
+		}
+		conf->priority_age_min_time = age_min_time * 60;
+		xfree(temp_str);
+	} else
+		conf->priority_age_min_time = DEFAULT_PRIORITY_AGE_MIN_TIME;
+
 	if (s_p_get_string(&temp_str, "PriorityDecayHalfLife", hashtbl)) {
 		int max_time = time_str2mins(temp_str);
 		if ((max_time < 0) && (max_time != INFINITE)) {
@@ -4271,6 +4286,10 @@ _validate_and_set_defaults(slurm_ctl_conf_t *conf, s_p_hashtbl_t *hashtbl)
 	} else
 		conf->priority_max_age = DEFAULT_PRIORITY_DECAY;
 
+	if (!s_p_get_double(&conf->priority_max_age_time, "PriorityMaxAgeTime",
+			    hashtbl) || (conf->priority_max_age_time < 0.0))
+		conf->priority_max_age_time = DEFAULT_PRIORITY_MAX_AGE_TIME;
+
 	(void) s_p_get_string(&conf->priority_params, "PriorityParameters",
 			      hashtbl);
 
@@ -4314,6 +4333,9 @@ _validate_and_set_defaults(slurm_ctl_conf_t *conf, s_p_hashtbl_t *hashtbl)
 	if (!s_p_get_uint32(&conf->priority_weight_age,
 			    "PriorityWeightAge", hashtbl))
 		conf->priority_weight_age = 0;
+	if (!s_p_get_uint32(&conf->priority_weight_age_time,
+			    "PriorityWeightAgeTime", hashtbl))
+		conf->priority_weight_age_time = 0;
 	if (!s_p_get_uint32(&conf->priority_weight_fs,
 			    "PriorityWeightFairshare", hashtbl))
 		conf->priority_weight_fs = 0;
@@ -4333,6 +4355,7 @@ _validate_and_set_defaults(slurm_ctl_conf_t *conf, s_p_hashtbl_t *hashtbl)
 	/* Check for possible overflow of priority.
 	 * We also check when doing the computation for each job. */
 	tot_prio_weight = (uint64_t) conf->priority_weight_age   +
+		(uint64_t) conf->priority_weight_age_time   +
 		(uint64_t) conf->priority_weight_fs   +
 		(uint64_t) conf->priority_weight_js   +
 		(uint64_t) conf->priority_weight_part +

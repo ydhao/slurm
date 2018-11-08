@@ -609,6 +609,25 @@ char *slurm_get_plugin_dir(void)
 	return plugin_dir;
 }
 
+/* slurm_get_priority_age_min_time
+ * returns the priority age min time in seconds from slurmctld_conf object
+ * RET uint32_t - age_min_time in secs.
+ */
+uint32_t slurm_get_priority_age_min_time(void)
+{
+	uint32_t age_min_time = NO_VAL;
+	slurm_ctl_conf_t *conf;
+
+	if (slurmdbd_conf) {
+	} else {
+		conf = slurm_conf_lock();
+		age_min_time = conf->priority_age_min_time;
+		slurm_conf_unlock();
+	}
+
+	return age_min_time;
+}
+
 /* slurm_get_priority_decay_hl
  * returns the priority decay half life in seconds from slurmctld_conf object
  * RET uint32_t - decay_hl in secs.
@@ -704,6 +723,25 @@ uint32_t slurm_get_priority_max_age(void)
 	return age;
 }
 
+/* slurm_get_priority_max_age_time
+ * returns the priority max age / time from slurmctld_conf object
+ * RET double - max_age_time.
+ */
+double slurm_get_priority_max_age_time(void)
+{
+	double max_age_time = 0.0;
+	slurm_ctl_conf_t *conf;
+
+	if (slurmdbd_conf) {
+	} else {
+		conf = slurm_conf_lock();
+		max_age_time = conf->priority_max_age_time;
+		slurm_conf_unlock();
+	}
+
+	return max_age_time;
+}
+
 /* slurm_get_priority_params
  * RET char * - Value of PriorityParameters, MUST be xfreed by caller */
 char *slurm_get_priority_params(void)
@@ -777,6 +815,24 @@ uint32_t slurm_get_priority_weight_age(void)
 	return factor;
 }
 
+/* slurm_get_priority_weight_age_time
+ * returns the priority weight for agetime from slurmctld_conf object
+ * RET uint32_t - factor weight.
+ */
+uint32_t slurm_get_priority_weight_age_time(void)
+{
+	uint32_t factor = NO_VAL;
+	slurm_ctl_conf_t *conf;
+
+	if (slurmdbd_conf) {
+	} else {
+		conf = slurm_conf_lock();
+		factor = conf->priority_weight_age_time;
+		slurm_conf_unlock();
+	}
+
+	return factor;
+}
 
 /* slurm_get_priority_weight_fairshare
  * returns the priority weight for fairshare from slurmctld_conf object
