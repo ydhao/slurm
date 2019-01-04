@@ -44,6 +44,8 @@
 #include <sys/param.h>
 #include <sys/cpuset.h>
 typedef cpuset_t cpu_set_t;
+#elif defined(__APPLE__)
+typedef uint64_t cpu_set_t;
 #endif
 
 #include "src/slurmd/slurmstepd/slurmstepd_job.h"
