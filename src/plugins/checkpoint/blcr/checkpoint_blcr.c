@@ -68,7 +68,7 @@
  * overwritten when linking with the slurmctld.
  */
 #if defined (__APPLE__)
-void acct_policy_add_job_submit(struct job_record *job_ptr)
+extern void acct_policy_add_job_submit(struct job_record *job_ptr)
 	__attribute__((weak_import));
 #else
 void acct_policy_add_job_submit(struct job_record *job_ptr);
