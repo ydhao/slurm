@@ -971,8 +971,18 @@ struct 	step_record {
 	char *tres_per_task;		/* semicolon delimited list of TRES=# values */
 };
 
+typedef struct {
+	uint32_t job_id;
+	pthread_t tid;
+	pid_t cpid;
+	pthread_mutex_t *timer_mutex;
+	pthread_cond_t *timer_cond;
+} ctld_script_rec_t;
+
 extern List job_list;			/* list of job_record entries */
 extern List purge_files_list;		/* list of job ids to purge files of */
+extern List ctld_script_thd_list;       /* list of slurmctld threads running
+					 * scripts (i.e. prolog, epilog etc */
 
 /*****************************************************************************\
  *  Consumable Resources parameters and data structures

@@ -153,6 +153,9 @@ extern void print_job_dependency(struct job_record *job_ptr);
 /* Decrement a job's prolog_running counter and launch the job if zero */
 extern void prolog_running_decr(struct job_record *job_ptr);
 
+/* Remove this job from the list of jobs currently running a script */
+extern void remove_ctld_script(pthread_t tid);
+
 /*
  * prolog_slurmctld - execute the prolog_slurmctld for a job that has just
  *	been allocated resources.

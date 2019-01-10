@@ -188,6 +188,7 @@ int     test_config_rc = 0;
 uint16_t running_cache = 0;
 pthread_mutex_t assoc_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t assoc_cache_cond = PTHREAD_COND_INITIALIZER;
+List ctld_script_thd_list = NULL;
 
 /* Local variables */
 static pthread_t assoc_cache_thread = (pthread_t) 0;
@@ -230,6 +231,8 @@ static void *       _assoc_cache_mgr(void *no_data);
 static int          _controller_index(void);
 static void         _become_slurm_user(void);
 static void         _create_clustername_file(void);
+static void         _ctld_script_rec_cleanup(ctld_script_rec_t *r);
+static void         _ctld_script_rec_destroy(void *arg);
 static void         _default_sigaction(int sig);
 static void         _get_fed_updates();
 static void         _init_config(void);
@@ -775,6 +778,12 @@ int main(int argc, char **argv)
 		slurmctld_config.thread_id_sig  = (pthread_t) 0;
 		slurmctld_config.thread_id_rpc  = (pthread_t) 0;
 		slurmctld_config.thread_id_save = (pthread_t) 0;
+
+		/* kill all scripts running by the slurmctld */
+		(void) list_for_each(ctld_script_thd_list,
+			      (ListForF)_ctld_script_rec_cleanup, NULL);
+		(void) list_flush(ctld_script_thd_list);
+
 		bb_g_fini();
 		power_g_fini();
 		slurm_mcs_fini();
@@ -894,6 +903,7 @@ int main(int argc, char **argv)
 	slurm_cred_fini();	/* must be after ctx_destroy */
 	slurm_conf_destroy();
 	slurm_api_clear_config();
+	FREE_NULL_LIST(ctld_script_thd_list);
 	usleep(500000);
 }
 #else
@@ -967,6 +977,7 @@ static void  _init_config(void)
 	slurmctld_config.thread_id_main = pthread_self();
 	slurmctld_config.scheduling_disabled  = false;
 	slurmctld_config.submissions_disabled = false;
+	ctld_script_thd_list = list_create(_ctld_script_rec_destroy);
 	slurm_mutex_init(&slurmctld_config.thread_count_lock);
 	slurm_cond_init(&slurmctld_config.thread_count_cond, NULL);
 	slurmctld_config.thread_id_main    = (pthread_t) 0;
@@ -2933,6 +2944,51 @@ static void _create_clustername_file(void)
 	fclose(fp);
 
 	xfree(filename);
+}
+
+/*
+ * Kill the prolog process forked by the _run_[prolog|epilog] thread,
+ * this will make the caller thread to finalize, so wait also for it to
+ * avoid any zombies.
+ */
+static void _ctld_script_rec_cleanup(ctld_script_rec_t *r)
+{
+	int rc;
+	pid_t pid_to_kill;
+	struct timeval tvnow;
+	struct timespec abs;
+
+	debug("slurmctld script for jobid=%u found running, tid=%lu, force ending.",
+	      r->job_id, (unsigned long)r->tid);
+
+	pid_to_kill = r->cpid;
+	r->cpid = -1;
+	kill(pid_to_kill, SIGKILL);
+
+	/* setup timer */
+	gettimeofday(&tvnow, NULL);
+	/* FIXME: Use PrologEpilogTimeout, KillWait? */
+	abs.tv_sec = tvnow.tv_sec + 5;
+	abs.tv_nsec = tvnow.tv_usec * 1000;
+
+	slurm_mutex_lock(r->timer_mutex);
+	rc = pthread_cond_timedwait(r->timer_cond, r->timer_mutex, &abs);
+	slurm_mutex_unlock(r->timer_mutex);
+
+	if (rc)
+		pthread_cancel(r->tid);
+
+	pthread_join(r->tid, NULL);
+}
+
+static void _ctld_script_rec_destroy(void *arg)
+{
+	ctld_script_rec_t *r = (ctld_script_rec_t *)arg;
+	debug3("destroying job %u slurmctld script thread, tid %lu",
+	       r->job_id, r->tid);
+	slurm_cond_destroy(r->timer_cond);
+	slurm_mutex_destroy(r->timer_mutex);
+	xfree(r);
 }
 
 /* Kill the currently running slurmctld
