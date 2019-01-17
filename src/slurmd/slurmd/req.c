@@ -5954,7 +5954,7 @@ _build_env(job_env_t *job_env)
 
 	setenvf(&env, "SLURM_JOBID", "%u", job_env->jobid);
 	if ((job_env->pack_jobid != 0) && (job_env->pack_jobid != NO_VAL))
-		setenvf(&env, "SLURM_PACK_JOBID", "%u", job_env->pack_jobid);
+		setenvf(&env, "SLURM_PACK_JOB_ID", "%u", job_env->pack_jobid);
 	setenvf(&env, "SLURM_UID",   "%u", job_env->uid);
 	if (job_env->node_list)
 		setenvf(&env, "SLURM_NODELIST", "%s", job_env->node_list);
