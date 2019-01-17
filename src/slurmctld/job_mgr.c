@@ -190,7 +190,7 @@ static void _dump_job_state(struct job_record *dump_job_ptr, Buf buffer);
 static void _dump_job_fed_details(job_fed_details_t *fed_details_ptr,
 				  Buf buffer);
 static job_fed_details_t *_dup_job_fed_details(job_fed_details_t *src);
-static int _find_ctld_script_rec(void *object, void *key);
+static int _kill_ctld_script(void *object, void *x);
 static void _get_batch_job_dir_ids(List batch_dirs);
 static bool _get_whole_hetjob(void);
 static void _job_array_comp(struct job_record *job_ptr, bool was_running,
@@ -5898,23 +5898,9 @@ static int _job_complete(struct job_record *job_ptr, uid_t uid, bool requeue,
 
 	/* Check for and cleanup stuck scripts */
 	if (job_ptr->details && job_ptr->details->prolog_running) {
-		ctld_script_rec_t * r;
-
-		r = list_find_first(ctld_script_thd_list,
-					 (ListFindF) _find_ctld_script_rec,
-					 job_ptr);
-		/* FIXME: Possible race when accessing the r? */
-		if (r) {
-			debug("%s: killing one running prolog/epilog script "
-			      "for completed job %"PRIu32", pid %"PRIu32"",
-			      __func__, job_ptr->job_id, r->cpid);
-			kill(r->cpid, SIGKILL);
-			/*
-			 * From now on the run_prolog thread will detect
-			 * the pid as dead and will continue doing cleanup
-			 * and removing itself from the running scripts list.
-			 */
-		}
+		list_for_each(ctld_script_thd_list,
+			      (ListFindF) _kill_ctld_script,
+			      job_ptr);
 	}
 	info("%s: %pJ done", __func__, job_ptr);
 	return SLURM_SUCCESS;
@@ -14326,11 +14312,25 @@ int sync_job_files(void)
 	return SLURM_SUCCESS;
 }
 
-static int _find_ctld_script_rec(void *object, void *key) {
-	ctld_script_rec_t *rec = (ctld_script_rec_t *) object;
-	struct job_record *job_ptr = (struct job_record *) key;
+static int _kill_ctld_script(void *r, void *x)
+{
+	ctld_script_rec_t *rec = (ctld_script_rec_t *) r;
+	struct job_record *job_ptr = (struct job_record *) x;
 
-	return (job_ptr->job_id == rec->job_id);
+	xassert(rec);
+	xassert(job_ptr);
+
+	if (rec->job_id == job_ptr->job_id) {
+		debug("%s: killing running prolog/epilog script for completed job %"PRIu32", pid %"PRIu32"",
+		      __func__, job_ptr->job_id, rec->cpid);
+		kill(rec->cpid, SIGKILL);
+		/*
+		 * From now on the launcher thread should detect the pid as
+		 * dead and continue doing cleanup and removing itself from
+		 * the running scripts list.
+		 */
+	}
+	return 0;
 }
 
 /* Append to the batch_dirs list the job_id's associated with

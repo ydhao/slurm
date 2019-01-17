@@ -3811,17 +3811,9 @@ static void *_run_epilog(void *arg)
 	int i, status, wait_rc;
 	char *argv[2];
 	uint16_t tm;
-	ctld_script_rec_t *ctld_script_rec =
-		xmalloc(sizeof(ctld_script_rec_t));
+	ctld_script_rec_t *ctld_script_rec;
 	pthread_cond_t  timer_cond  = PTHREAD_COND_INITIALIZER;
 	pthread_mutex_t timer_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-	/* Add this to the ctld_script_thd_list first */
-	ctld_script_rec->tid = pthread_self();
-	ctld_script_rec->timer_mutex = &timer_mutex;
-	ctld_script_rec->timer_cond = &timer_cond;
-	ctld_script_rec->job_id = epilog_arg->job_id;
-	list_append(ctld_script_thd_list, ctld_script_rec);
 
 	argv[0] = epilog_arg->epilog_slurmctld;
 	argv[1] = NULL;
@@ -3837,7 +3829,15 @@ static void *_run_epilog(void *arg)
 		execve(argv[0], argv, epilog_arg->my_env);
 		exit(127);
 	}
+
+	/* Add this process to the ctld_script_thd_list */
+	ctld_script_rec = xmalloc(sizeof(ctld_script_rec_t));
+	ctld_script_rec->tid = pthread_self();
+	ctld_script_rec->timer_mutex = &timer_mutex;
+	ctld_script_rec->timer_cond = &timer_cond;
+	ctld_script_rec->job_id = epilog_arg->job_id;
 	ctld_script_rec->cpid = cpid;
+	list_append(ctld_script_thd_list, ctld_script_rec);
 
 	/* Prolog and epilog use the same timeout
 	 */
@@ -4292,18 +4292,12 @@ static void *_run_prolog(void *arg)
 	time_t now = time(NULL);
 	uint16_t resume_timeout = slurm_get_resume_timeout();
 	uint16_t tm;
-	ctld_script_rec_t *ctld_script_rec =
-		xmalloc(sizeof(ctld_script_rec_t));
+	ctld_script_rec_t *ctld_script_rec;
 	pthread_cond_t  timer_cond  = PTHREAD_COND_INITIALIZER;
 	pthread_mutex_t timer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-	/* Add this to the ctld_script_thd_list first */
-	ctld_script_rec->tid = pthread_self();
-	ctld_script_rec->timer_mutex = &timer_mutex;
-	ctld_script_rec->timer_cond = &timer_cond;
-
 	lock_slurmctld(config_read_lock);
-	job_id = ctld_script_rec->job_id = job_ptr->job_id;
+	job_id = job_ptr->job_id;
 
 	argv[0] = xstrdup(slurmctld_conf.prolog_slurmctld);
 	argv[1] = NULL;
@@ -4321,8 +4315,6 @@ static void *_run_prolog(void *arg)
 	}
 	unlock_slurmctld(config_read_lock);
 
-	list_append(ctld_script_thd_list, ctld_script_rec);
-
 	if ((cpid = fork()) < 0) {
 		error("prolog_slurmctld fork error: %m");
 		goto fini;
@@ -4334,7 +4326,16 @@ static void *_run_prolog(void *arg)
 		execve(argv[0], argv, my_env);
 		exit(127);
 	}
+
+	/* Add this new process to the ctld_script_thd_list */
+	ctld_script_rec = xmalloc(sizeof(ctld_script_rec_t));
+	ctld_script_rec->tid = pthread_self();
+	ctld_script_rec->timer_mutex = &timer_mutex;
+	ctld_script_rec->timer_cond = &timer_cond;
+	ctld_script_rec->job_id = job_ptr->job_id;
 	ctld_script_rec->cpid = cpid;
+	list_append(ctld_script_thd_list, ctld_script_rec);
+
 
 	tm = slurm_get_prolog_timeout();
 	while (1) {
@@ -4349,7 +4350,6 @@ static void *_run_prolog(void *arg)
 		}
 	}
 
-	/* Possible race accessing ctld_script_rec? */
 	if (WIFSIGNALED(status) && (WTERMSIG(status) == SIGKILL)
 	    && ctld_script_rec->cpid == -1) {
 		slurm_mutex_lock(&timer_mutex);
