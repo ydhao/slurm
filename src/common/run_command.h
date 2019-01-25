@@ -49,10 +49,12 @@ extern int run_command_count(void);
  * script_args IN - Arguments to the script
  * max_wait IN - Maximum time to wait in milliseconds,
  *		 -1 for no limit (asynchronous)
+ * ctld_script_rec IN - Tracking details for this execution
  * status OUT - Job exit code
  * Return stdout+stderr of spawned program, value must be xfreed. */
 extern char *run_command(char *script_type, char *script_path,
-			 char **script_argv, int max_wait, int *status);
+			 char **script_argv, int max_wait, void * x,
+			 List ctld_script_thd_list, int *status);
 
 /* Free an array of xmalloced records. The array must be NULL terminated. */
 extern void free_command_argv(char **script_argv);

@@ -45,6 +45,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <inttypes.h>		/* for uint16_t, uint32_t definitions */
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #define POLLRDHUP POLLHUP
@@ -54,12 +55,20 @@
 #include "src/common/timers.h"
 #include "src/common/xmalloc.h"
 #include "src/common/xstring.h"
-
+#include "src/common/list.h"
 #include "src/common/run_command.h"
 
 static int shutdown = 0;
 static int child_proc_count = 0;
 static pthread_mutex_t proc_count_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+	uint32_t job_id;
+	pthread_t tid;
+	pid_t cpid;
+	pthread_mutex_t *timer_mutex;
+	pthread_cond_t *timer_cond;
+} ctld_script_rec_t;
 
 #define MAX_POLL_WAIT 500
 
@@ -99,15 +108,20 @@ static int _tot_wait (struct timeval *start_time)
  * script_args IN - Arguments to the script
  * max_wait IN - Maximum time to wait in milliseconds,
  *		 -1 for no limit (asynchronous)
+ * ctld_script_rec IN - Tracking details for this execution
+ * ctld_script_thd_list IN - ctld list where to keep track of this execution
  * status OUT - Job exit code
  * Return stdout+stderr of spawned program, value must be xfreed. */
 extern char *run_command(char *script_type, char *script_path,
-			   char **script_argv, int max_wait, int *status)
+			 char **script_argv, int max_wait, void * x,
+			 List ctld_script_thd_list, int *status)
 {
 	int i, new_wait, resp_size = 0, resp_offset = 0;
 	pid_t cpid;
 	char *resp = NULL;
 	int pfd[2] = { -1, -1 };
+	ctld_script_rec_t *s, *ctld_script_rec = (ctld_script_rec_t *) x;
+	ListIterator iter;
 
 	if ((script_path == NULL) || (script_path[0] == '\0')) {
 		error("%s: no script specified", __func__);
@@ -180,6 +194,10 @@ extern char *run_command(char *script_type, char *script_path,
 		resp = xmalloc(resp_size);
 		close(pfd[1]);
 		gettimeofday(&tstart, NULL);
+		if (ctld_script_rec) {
+			ctld_script_rec->cpid = cpid;
+			list_append(ctld_script_thd_list, ctld_script_rec);
+		}
 		while (1) {
 			if (shutdown) {
 				error("%s: killing %s operation on shutdown",
@@ -236,8 +254,31 @@ extern char *run_command(char *script_type, char *script_path,
 		child_proc_count--;
 		slurm_mutex_unlock(&proc_count_mutex);
 	} else {
+		if (ctld_script_rec) {
+			ctld_script_rec->cpid = cpid;
+			list_append(ctld_script_thd_list, ctld_script_rec);
+		}
 		waitpid(cpid, status, 0);
 	}
+
+	/* I was killed by slurmctld, bail out right now */
+	if (WIFSIGNALED(*status) && (WTERMSIG(*status) == SIGKILL)
+	    && ctld_script_rec->cpid == -1) {
+		slurm_mutex_lock(ctld_script_rec->timer_mutex);
+		slurm_cond_broadcast(ctld_script_rec->timer_cond);
+		slurm_mutex_unlock(ctld_script_rec->timer_mutex);
+		return resp;
+	}
+
+	/* Everything went fine, remove this thread from the list */
+	iter = list_iterator_create(ctld_script_thd_list);
+	while ((s = (ctld_script_rec_t *) list_next(iter))) {
+		if (s->tid == ctld_script_rec->tid) {
+			list_remove(iter);
+			break;
+		}
+	}
+	list_iterator_destroy(iter);
 	return resp;
 }
 
