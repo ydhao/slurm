@@ -12246,6 +12246,7 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 		 * old qos/assoc's
 		 */
 		acct_policy_remove_job_submit(job_ptr);
+		acct_policy_remove_accrue_time(job_ptr, false);
 	}
 
 	if (new_qos_ptr) {
