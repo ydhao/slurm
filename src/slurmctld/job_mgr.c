@@ -11355,6 +11355,8 @@ static bool _top_priority(struct job_record *job_ptr, uint32_t pack_job_offset)
 			if (job_ptr->state_reason != FAIL_BAD_CONSTRAINTS
 			    && (job_ptr->state_reason != WAIT_RESV_DELETED)
 			    && (job_ptr->state_reason != FAIL_BURST_BUFFER_OP)
+			    && (job_ptr->state_reason != FAIL_ACCOUNT)
+			    && (job_ptr->state_reason != FAIL_QOS)
 			    && (job_ptr->state_reason != WAIT_HELD)
 			    && (job_ptr->state_reason != WAIT_HELD_USER)
 			    && job_ptr->state_reason != WAIT_MAX_REQUEUE) {
@@ -13296,7 +13298,11 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 		if (error_code != SLURM_SUCCESS) {
 			if ((job_ptr->state_reason != WAIT_HELD) &&
 			    (job_ptr->state_reason != WAIT_HELD_USER) &&
-			    (job_ptr->state_reason != WAIT_RESV_DELETED)) {
+			    (job_ptr->state_reason != WAIT_RESV_DELETED) &&
+			    ((job_ptr->state_reason != FAIL_ACCOUNT) &&
+			     !new_assoc_ptr) &&
+			    ((job_ptr->state_reason != FAIL_QOS) &&
+			     !new_qos_ptr)) {
 				job_ptr->state_reason = fail_reason;
 				xfree(job_ptr->state_desc);
 			}
@@ -13305,7 +13311,11 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 	} else if ((job_ptr->state_reason != WAIT_HELD)
 		   && (job_ptr->state_reason != WAIT_HELD_USER)
 		   && (job_ptr->state_reason != WAIT_RESV_DELETED)
-		   && job_ptr->state_reason != WAIT_MAX_REQUEUE) {
+		   && (job_ptr->state_reason != WAIT_MAX_REQUEUE)
+		   && ((job_ptr->state_reason != FAIL_ACCOUNT)
+		       && !new_assoc_ptr)
+		   && ((job_ptr->state_reason != FAIL_QOS)
+		       && !new_qos_ptr)) {
 		job_ptr->state_reason = WAIT_NO_REASON;
 	}
 
@@ -15117,6 +15127,8 @@ extern bool job_independent(struct job_record *job_ptr, int will_run)
 	int depend_rc;
 
 	if ((job_ptr->state_reason == FAIL_BURST_BUFFER_OP) ||
+	    (job_ptr->state_reason == FAIL_ACCOUNT) ||
+	    (job_ptr->state_reason == FAIL_QOS) ||
 	    (job_ptr->state_reason == WAIT_HELD) ||
 	    (job_ptr->state_reason == WAIT_HELD_USER) ||
 	    (job_ptr->state_reason == WAIT_MAX_REQUEUE) ||
