@@ -571,6 +571,24 @@ static slurm_cli_opt_t slurm_opt_mcs_label = {
 	.reset_func = arg_reset_mcs_label,
 };
 
+static int arg_set_nodelist(slurm_opt_t *opt, const char *arg)
+{
+	xfree(opt->nodelist);
+	opt->nodelist = xstrdup(arg);
+
+	return SLURM_SUCCESS;
+}
+COMMON_STRING_OPTION_GET_AND_RESET(nodelist);
+static slurm_cli_opt_t slurm_opt_nodelist = {
+	.name = "nodelist",
+	.has_arg = required_argument,
+	.val = 'w',
+	.set_func = arg_set_nodelist,
+	.get_func = arg_get_nodelist,
+	.reset_func = arg_reset_nodelist,
+	.reset_each_pass = true,
+};
+
 COMMON_BOOL_OPTION(overcommit, "overcommit");
 static slurm_cli_opt_t slurm_opt_overcommit = {
 	.name = "overcommit",
@@ -811,6 +829,7 @@ static slurm_cli_opt_t *common_options[] = {
 	&slurm_opt_hold,
 	&slurm_opt_licenses,
 	&slurm_opt_mcs_label,
+	&slurm_opt_nodelist,
 	&slurm_opt_overcommit,
 	&slurm_opt_oversubscribe,
 	&slurm_opt_partition,
