@@ -602,7 +602,6 @@ static struct option long_options[] = {
 	{"ntasks",        required_argument, 0, 'n'},
 	{"nodes",         required_argument, 0, 'N'},
 	{"output",        required_argument, 0, 'o'},
-	{"oversubscribe", no_argument,       0, 's'},
 	{"partition",     required_argument, 0, 'p'},
 	{"quiet",         no_argument,       0, 'Q'},
 	{"core-spec",     required_argument, 0, 'S'},
@@ -1200,9 +1199,6 @@ static void _set_options(int argc, char **argv)
 			break;
 		case 'Q':
 			/* handled in process_options_first_pass() */
-			break;
-		case 's':
-			opt.shared = JOB_SHARED_OK;
 			break;
 		case 'S':
 			opt.core_spec = parse_int("core_spec", optarg, false);
