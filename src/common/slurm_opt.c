@@ -459,6 +459,25 @@ static slurm_cli_opt_t slurm_opt_deadline = {
 	.reset_func = arg_reset_deadline,
 };
 
+static int arg_set_delay_boot(slurm_opt_t *opt, const char *arg)
+{
+	if ((opt->delay_boot = time_str2secs(arg)) == NO_VAL) {
+		error("Invalid --delay-boot specification");
+		exit(-1);
+	}
+
+	return SLURM_SUCCESS;
+}
+COMMON_TIME_DURATION_OPTION_GET_AND_RESET(delay_boot);
+static slurm_cli_opt_t slurm_opt_delay_boot = {
+	.name = "delay-boot",
+	.has_arg = required_argument,
+	.val = LONG_OPT_DELAY_BOOT,
+	.set_func = arg_set_delay_boot,
+	.get_func = arg_get_delay_boot,
+	.reset_func = arg_reset_delay_boot,
+};
+
 COMMON_STRING_OPTION(dependency);
 static slurm_cli_opt_t slurm_opt_dependency = {
 	.name = "dependency",
@@ -1202,6 +1221,7 @@ static slurm_cli_opt_t *common_options[] = {
 	&slurm_opt_cpu_freq,
 	&slurm_opt_cpus_per_gpu,
 	&slurm_opt_deadline,
+	&slurm_opt_delay_boot,
 	&slurm_opt_dependency,
 	&slurm_opt_distribution,
 	&slurm_opt_exclude,
