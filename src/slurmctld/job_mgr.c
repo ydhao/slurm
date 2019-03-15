@@ -326,6 +326,54 @@ static void _job_fail_account(struct job_record *job_ptr, const char *func_name)
 	job_ptr->assoc_id = 0;
 }
 
+static void _job_fail_qos(struct job_record *job_ptr, const char *func_name)
+{
+	if (IS_JOB_PENDING(job_ptr)) {
+		info("%s: %pJ ineligible due to invalid qos",
+		     func_name, job_ptr);
+		xfree(job_ptr->state_desc);
+
+		job_ptr->state_reason = FAIL_QOS;
+
+		if (job_ptr->details) {
+			job_ptr->details->begin_time = 0;
+			/* Update job with new begin_time. */
+			jobacct_storage_g_job_start(acct_db_conn, job_ptr);
+		}
+	}
+
+	/* This job is no longer eligible, so make it so. */
+	if (job_ptr->qos_ptr) {
+		slurmdb_assoc_rec_t *tmp_assoc = job_ptr->assoc_ptr;
+
+		/*
+		 * Force a start so the qos doesn't get lost.  Since
+		 * there could be some delay in the start of the job when
+		 * running with the slurmdbd.
+		 */
+		if (!job_ptr->db_index)
+			jobacct_storage_g_job_start(acct_db_conn, job_ptr);
+
+		acct_policy_remove_accrue_time(job_ptr, false);
+
+		/*
+		 * Clear ptrs so that only qos usage is removed. Otherwise
+		 * association limits will be double accounted for when this
+		 * job finishes. Don't do this for acrrual time, it has be on
+		 * both because the job is ineligible and can't accrue time.
+		 */
+		job_ptr->assoc_ptr = NULL;
+
+		acct_policy_remove_job_submit(job_ptr);
+
+		job_ptr->assoc_ptr = tmp_assoc;
+
+		job_ptr->qos_ptr = NULL;
+	}
+
+	job_ptr->qos_id = 0;
+}
+
 /*
  * Functions used to manage job array responses with a separate return code
  * possible for each task ID
@@ -2356,10 +2404,7 @@ static int _load_job_state(Buf buffer, uint16_t protocol_version)
 			job_ptr->limit_set.qos, &qos_rec,
 			&qos_error, true);
 		if ((qos_error != SLURM_SUCCESS) && !job_ptr->limit_set.qos) {
-			info("Holding %pJ with invalid qos", job_ptr);
-			xfree(job_ptr->state_desc);
-			job_ptr->state_reason = FAIL_QOS;
-			job_ptr->qos_id = 0;
+			_job_fail_qos(job_ptr, __func__);
 		} else
 			job_ptr->qos_id = qos_rec.id;
 	}
