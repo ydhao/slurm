@@ -181,7 +181,6 @@ static void _opt_default(bool first_pass)
 		opt.uid			= uid;
 		sbopt.umask		= -1;
 		sbopt.wait		= false;
-		sbopt.wait_all_nodes	= NO_VAL16;
 		opt.x11			= 0;
 	}
 
@@ -313,7 +312,7 @@ env_vars_t env_vars[] = {
   { "SBATCH_TIMELIMIT", 't' },
   { "SBATCH_USE_MIN_NODES", LONG_OPT_USE_MIN_NODES },
   {"SBATCH_WAIT",          OPT_BOOL,       &sbopt.wait,        NULL          },
-  {"SBATCH_WAIT_ALL_NODES",OPT_INT,        &sbopt.wait_all_nodes,NULL        },
+  { "SBATCH_WAIT_ALL_NODES", LONG_OPT_WAIT_ALL_NODES },
   { "SBATCH_WAIT4SWITCH", LONG_OPT_SWITCH_WAIT },
   { "SBATCH_WCKEY", LONG_OPT_WCKEY },
 
@@ -487,7 +486,6 @@ static struct option long_options[] = {
 	{"test-only",     no_argument,       0, LONG_OPT_TEST_ONLY},
 	{"threads-per-core", required_argument, 0, LONG_OPT_THREADSPERCORE},
 	{"uid",           required_argument, 0, LONG_OPT_UID},
-	{"wait-all-nodes",required_argument, 0, LONG_OPT_WAIT_ALL_NODES},
 	{"wrap",          required_argument, 0, LONG_OPT_WRAP},
 	{NULL,            0,                 0, 0}
 };
@@ -1108,16 +1106,6 @@ static void _set_options(int argc, char **argv)
 		case LONG_OPT_CHECKPOINT:
 			xfree(sbopt.ckpt_interval_str);
 			sbopt.ckpt_interval_str = xstrdup(optarg);
-			break;
-		case LONG_OPT_WAIT_ALL_NODES:
-			if (!optarg)
-				break;	/* Fix for Coverity false positive */
-			if ((optarg[0] < '0') || (optarg[0] > '9')) {
-				error("Invalid --wait-all-nodes argument: %s",
-				      optarg);
-				exit(1);
-			}
-			sbopt.wait_all_nodes = strtol(optarg, NULL, 10);
 			break;
 		case LONG_OPT_EXPORT:
 			if (!optarg)
