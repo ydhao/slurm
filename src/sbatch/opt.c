@@ -176,12 +176,10 @@ static void _opt_default(bool first_pass)
 	opt.max_nodes			= 0;
 	opt.min_nodes			= 1;
 	opt.nodes_set			= false;
-	opt.ntasks			= 1;
 	opt.ntasks_per_core		= NO_VAL;
 	opt.ntasks_per_core_set		= false;
 	opt.ntasks_per_node		= 0;	/* ntask max limits */
 	opt.ntasks_per_socket		= NO_VAL;
-	opt.ntasks_set			= false;
 	opt.sockets_per_node		= NO_VAL; /* requested sockets */
 	opt.threads_per_core		= NO_VAL; /* requested threads */
 	opt.threads_per_core_set	= false;
@@ -387,8 +385,6 @@ static struct option long_options[] = {
 	{"error",         required_argument, 0, 'e'},
 	{"input",         required_argument, 0, 'i'},
 	{"kill-on-invalid-dep", required_argument, 0, LONG_OPT_KILL_INV_DEP},
-	{"tasks",         required_argument, 0, 'n'},
-	{"ntasks",        required_argument, 0, 'n'},
 	{"nodes",         required_argument, 0, 'N'},
 	{"output",        required_argument, 0, 'o'},
 	{"wait",          no_argument,       0, 'W'},
@@ -811,11 +807,6 @@ static void _set_options(int argc, char **argv)
 				sbopt.ifname = xstrdup("/dev/null");
 			else
 				sbopt.ifname = xstrdup(optarg);
-			break;
-		case 'n':
-			opt.ntasks_set = true;
-			opt.ntasks =
-				parse_int("number of tasks", optarg, true);
 			break;
 		case 'N':
 			if (!optarg)

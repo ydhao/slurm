@@ -121,7 +121,6 @@ struct option long_options[] = {
 	{"input",            required_argument, 0, 'i'},
 	{"kill-on-bad-exit", optional_argument, 0, 'K'},
 	{"label",            no_argument,       0, 'l'},
-	{"ntasks",           required_argument, 0, 'n'},
 	{"nodes",            required_argument, 0, 'N'},
 	{"output",           required_argument, 0, 'o'},
 	{"relative",         required_argument, 0, 'r'},
@@ -561,12 +560,10 @@ static void _opt_default(void)
 	opt.nodes_set			= false;
 	sropt.nodes_set_env		= false;
 	sropt.nodes_set_opt		= false;
-	opt.ntasks			= 1;
 	opt.ntasks_per_core		= NO_VAL;
 	opt.ntasks_per_core_set 	= false;
 	opt.ntasks_per_node		= NO_VAL; /* ntask max limits */
 	opt.ntasks_per_socket		= NO_VAL;
-	opt.ntasks_set			= false;
 	sropt.pack_group		= NULL;
 	sropt.pack_grp_bits		= NULL;
 	sropt.relative			= NO_VAL;
@@ -654,8 +651,9 @@ env_vars_t env_vars[] = {
 {"SLURM_NCORES_PER_SOCKET",OPT_NCORES,  NULL,               NULL             },
   { "SLURM_NETWORK", LONG_OPT_NETWORK },
   { "SLURM_NO_KILL", 'k' },
-{"SLURM_NTASKS",        OPT_INT,        &opt.ntasks,        &opt.ntasks_set  },
-{"SLURM_NPROCS",        OPT_INT,        &opt.ntasks,        &opt.ntasks_set  },
+  { "SLURM_NPROCS", 'n' },	/* deprecated, should be removed */
+				/* listed first so SLURM_NTASKS overrides */
+  { "SLURM_NTASKS", 'n' },
 {"SLURM_NSOCKETS_PER_NODE",OPT_NSOCKETS,NULL,               NULL             },
 {"SLURM_NTASKS_PER_NODE", OPT_INT,      &opt.ntasks_per_node,NULL            },
 {"SLURM_OPEN_MODE",     OPT_OPEN_MODE,  NULL,               NULL             },
@@ -915,7 +913,6 @@ static void _set_options(const int argc, char **argv)
 {
 	int opt_char, option_index = 0, max_val = 0;
 	struct utsname name;
-	bool ntasks_set_opt = false;
 	bool nodes_set_opt = false;
 
 #ifdef HAVE_PTY_H
@@ -973,14 +970,6 @@ static void _set_options(const int argc, char **argv)
 			break;
 		case (int)'l':
 			sropt.labelio = true;
-			break;
-		case (int)'n':
-			if (!optarg)
-				break;	/* Fix for Coverity false positive */
-			ntasks_set_opt = true;
-			opt.ntasks_set = true;
-			opt.ntasks =
-				_get_int(optarg, "number of tasks", true);
 			break;
 		case (int)'N':
 			if (!optarg)
@@ -1259,17 +1248,6 @@ static void _set_options(const int argc, char **argv)
 		}
 	}
 
-	/* This means --ntasks was read from the environment.  We will override
-	 * it with what the user specified in the hostlist. POE launched
-	 * jobs excluded (they have the SLURM_STARTED_STEP env var set). */
-	if (((opt.distribution & SLURM_DIST_STATE_BASE) == SLURM_DIST_ARBITRARY)
-	    && !getenv("SLURM_STARTED_STEP")) {
-		if (!ntasks_set_opt)
-			opt.ntasks_set = false;
-		if (!nodes_set_opt)
-			opt.nodes_set = false;
-	}
-
 	spank_option_table_destroy(optz);
 }
 
@@ -1461,6 +1439,17 @@ static bool _opt_verify(void)
 		error("-r,--relative not allowed with "
 		      "-w,--nodelist or -x,--exclude.");
 		verified = false;
+	}
+
+	/*
+	 * This means --ntasks was read from the environment.
+	 * We will override it with what the user specified in the hostlist.
+	 */
+	if (((opt.distribution & SLURM_DIST_STATE_BASE) == SLURM_DIST_ARBITRARY)) {
+		if (slurm_option_set_by_env('n'))
+			opt.ntasks_set = false;
+		if (!nodes_set_opt)
+			opt.nodes_set = false;
 	}
 
 	if (opt.hint &&

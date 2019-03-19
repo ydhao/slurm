@@ -1485,6 +1485,28 @@ static slurm_cli_opt_t slurm_opt_nodelist = {
 	.reset_each_pass = true,
 };
 
+static int arg_set_ntasks(slurm_opt_t *opt, const char *arg)
+{
+	opt->ntasks = parse_int("--ntasks", arg, true);
+	opt->ntasks_set = true;
+	return SLURM_SUCCESS;
+}
+COMMON_INT_OPTION_GET(ntasks);
+static void arg_reset_ntasks(slurm_opt_t *opt)
+{
+	opt->ntasks = 1;
+	opt->ntasks_set = false;
+}
+static slurm_cli_opt_t slurm_opt_ntasks = {
+	.name = "ntasks",
+	.has_arg = required_argument,
+	.val = 'n',
+	.set_func = arg_set_ntasks,
+	.get_func = arg_get_ntasks,
+	.reset_func = arg_reset_ntasks,
+	.reset_each_pass = true,
+};
+
 COMMON_BOOL_OPTION(overcommit, "overcommit");
 static slurm_cli_opt_t slurm_opt_overcommit = {
 	.name = "overcommit",
@@ -2179,6 +2201,7 @@ static slurm_cli_opt_t *common_options[] = {
 	&slurm_opt_no_shell,
 	&slurm_opt_nodefile,
 	&slurm_opt_nodelist,
+	&slurm_opt_ntasks,
 	&slurm_opt_overcommit,
 	&slurm_opt_oversubscribe,
 	&slurm_opt_partition,
