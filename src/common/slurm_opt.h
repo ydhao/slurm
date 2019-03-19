@@ -193,7 +193,6 @@ typedef struct sbatch_opt {
 	int script_argc;
 	char **script_argv;
 
-	char *ifname;			/* input file name		*/
 	char *ofname;			/* output file name		*/
 
 	char *array_inx;		/* --array			*/
@@ -398,6 +397,7 @@ typedef struct slurm_options {
 
 	/* used in both sbatch and srun, here for convenience */
 	char *efname;			/* error file name		*/
+	char *ifname;			/* input file name		*/
 } slurm_opt_t;
 
 extern struct option *slurm_option_table_create(struct option *options,
