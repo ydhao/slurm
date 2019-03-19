@@ -436,4 +436,11 @@ extern void slurm_reset_all_options(slurm_opt_t *opt, bool first_pass);
  */
 extern bool slurm_option_set_by_env(int optval);
 
+/*
+ * Pull these back in from the appropriate commands:
+ */
+extern void salloc_usage(void);
+extern void sbatch_usage(void);
+extern void srun_usage(void);
+
 #endif	/* _SLURM_OPT_H_ */
