@@ -1485,6 +1485,35 @@ static slurm_cli_opt_t slurm_opt_nodelist = {
 	.reset_each_pass = true,
 };
 
+static int arg_set_nodes(slurm_opt_t *opt, const char *arg)
+{
+	if (!(opt->nodes_set = verify_node_count(arg, &opt->min_nodes,
+					   &opt->max_nodes)))
+		exit(-1);
+	return SLURM_SUCCESS;
+}
+static char *arg_get_nodes(slurm_opt_t *opt)
+{
+	if (opt->min_nodes != opt->max_nodes)
+		return xstrdup_printf("%d-%d", opt->min_nodes, opt->max_nodes);
+	return xstrdup_printf("%d", opt->min_nodes);
+}
+static void arg_reset_nodes(slurm_opt_t *opt)
+{
+	opt->min_nodes = 1;
+	opt->max_nodes = 0;
+	opt->nodes_set = false;
+}
+static slurm_cli_opt_t slurm_opt_nodes = {
+	.name = "nodes",
+	.has_arg = required_argument,
+	.val = 'N',
+	.set_func = arg_set_nodes,
+	.get_func = arg_get_nodes,
+	.reset_func = arg_reset_nodes,
+	.reset_each_pass = true,
+};
+
 static int arg_set_ntasks(slurm_opt_t *opt, const char *arg)
 {
 	opt->ntasks = parse_int("--ntasks", arg, true);
@@ -2201,6 +2230,7 @@ static slurm_cli_opt_t *common_options[] = {
 	&slurm_opt_no_shell,
 	&slurm_opt_nodefile,
 	&slurm_opt_nodelist,
+	&slurm_opt_nodes,
 	&slurm_opt_ntasks,
 	&slurm_opt_overcommit,
 	&slurm_opt_oversubscribe,
