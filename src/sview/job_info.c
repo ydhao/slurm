@@ -2609,6 +2609,8 @@ static void _update_step_record(job_step_info_t *step_ptr,
 		snprintf(tmp_step_id, sizeof(tmp_step_id), "TBD");
 	else if (step_ptr->step_id == SLURM_EXTERN_CONT)
 		snprintf(tmp_step_id, sizeof(tmp_step_id), "Extern");
+	else if (step_ptr->step_id == SLURM_BATCH_SCRIPT)
+		snprintf(tmp_step_id, sizeof(tmp_step_id), "Batch");
 	else
 		snprintf(tmp_step_id, sizeof(tmp_step_id), "%u", step_ptr->step_id);
 
