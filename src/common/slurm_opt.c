@@ -1476,6 +1476,16 @@ static slurm_cli_opt_t slurm_opt_kill_on_invalid_dep = {
 	.reset_func = arg_reset_kill_on_invalid_dep,
 };
 
+COMMON_SRUN_BOOL_OPTION(labelio);
+static slurm_cli_opt_t slurm_opt_label = {
+	.name = "label",
+	.has_arg = no_argument,
+	.val = 'l',
+	.set_func_srun = arg_set_labelio,
+	.get_func = arg_get_labelio,
+	.reset_func = arg_reset_labelio,
+};
+
 COMMON_STRING_OPTION(licenses);
 static slurm_cli_opt_t slurm_opt_licenses = {
 	.name = "licenses",
@@ -3014,6 +3024,7 @@ static slurm_cli_opt_t *common_options[] = {
 	&slurm_opt_job_name,
 	&slurm_opt_kill_command,
 	&slurm_opt_kill_on_invalid_dep,
+	&slurm_opt_label,
 	&slurm_opt_licenses,
 	&slurm_opt_mail_type,
 	&slurm_opt_mail_user,
