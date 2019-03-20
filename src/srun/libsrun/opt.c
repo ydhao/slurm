@@ -51,7 +51,6 @@
 #include <sys/param.h>		/* MAXPATHLEN */
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/utsname.h>
 #include <unistd.h>
 
 #include "slurm/slurm.h"
@@ -119,7 +118,6 @@ struct option long_options[] = {
 	{"unbuffered",       no_argument,       0, 'u'},
 	{"wait",             required_argument, 0, 'W'},
 	{"disable-status",   no_argument,       0, 'X'},
-	{"no-allocate",      no_argument,       0, 'Z'},
 	{"accel-bind",       required_argument, 0, LONG_OPT_ACCEL_BIND},
 	{"bcast",            optional_argument, 0, LONG_OPT_BCAST},
 	{"compress",         optional_argument, 0, LONG_OPT_COMPRESS},
@@ -480,7 +478,6 @@ static void _opt_default(void)
 		sropt.max_wait		= slurm_get_wait_time();
 		/* Default launch msg timeout           */
 		sropt.msg_timeout		= slurm_get_msg_timeout();
-		sropt.no_alloc		= false;
 		sropt.noshell		= false;
 		sropt.parallel_debug	= false;
 		sropt.pty			= false;
@@ -832,7 +829,6 @@ static bitstr_t *_get_pack_group(const int argc, char **argv,
 static void _set_options(const int argc, char **argv)
 {
 	int opt_char, option_index = 0;
-	struct utsname name;
 
 #ifdef HAVE_PTY_H
 	char *tmp_str;
@@ -886,10 +882,6 @@ static void _set_options(const int argc, char **argv)
 			break;
 		case (int)'X':
 			sropt.disable_status = true;
-			break;
-		case (int)'Z':
-			sropt.no_alloc = true;
-			uname(&name);
 			break;
                 case LONG_OPT_BCAST:
 			if (optarg) {
