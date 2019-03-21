@@ -383,6 +383,7 @@ static void _do_power_work(time_t now)
 			suspend_cnt++;
 			suspend_cnt_f++;
 			node_ptr->node_state |= NODE_STATE_POWER_SAVE;
+			node_ptr->node_state |= NODE_STATE_POWERING_DOWN;
 			node_ptr->node_state &= (~NODE_STATE_NO_RESPOND);
 			bit_set(power_node_bitmap,   i);
 			bit_set(sleep_node_bitmap,   i);
@@ -412,9 +413,11 @@ static void _do_power_work(time_t now)
 			}
 		}
 
-		if (susp_state &&
+		if (IS_NODE_POWERING_DOWN(node_ptr) &&
 		    bit_test(suspend_node_bitmap, i) &&
 		    (node_ptr->last_response < now)) {
+
+			node_ptr->node_state &= (~NODE_STATE_POWERING_DOWN);
 
 			if (!IS_NODE_DOWN(node_ptr) &&
 			    !IS_NODE_DRAIN(node_ptr) &&
