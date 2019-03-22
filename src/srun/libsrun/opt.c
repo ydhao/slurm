@@ -433,7 +433,6 @@ static void _opt_default(void)
 		sropt.job_name_set_env	= false;
 		sropt.parallel_debug	= false;
 		sropt.test_exec		= false;
-		sropt.user_managed_io	= false;
 	}
 
 	/*
