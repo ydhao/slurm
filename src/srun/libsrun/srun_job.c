@@ -222,10 +222,7 @@ extern srun_job_t *job_step_create_allocation(
 	ai->jobid          = job_id;
 	ai->stepid         = NO_VAL;
 	ai->alias_list     = resp->alias_list;
-	if (srun_opt->alloc_nodelist)
-		ai->nodelist = xstrdup(srun_opt->alloc_nodelist);
-	else
-		ai->nodelist = xstrdup(resp->node_list);
+	ai->nodelist = xstrdup(resp->node_list);
 	hl = hostlist_create(ai->nodelist);
 	hostlist_uniq(hl);
 	alloc_count = hostlist_count(hl);
@@ -1118,7 +1115,6 @@ extern void create_srun_job(void **p_job, bool *got_alloc,
 					 * NOTE: Some options are not supported
 					 */
 					opt_local->min_nodes = resp->node_cnt;
-					xfree(srun_opt->alloc_nodelist);
 					if (!opt_local->ntasks_set) {
 						opt_local->ntasks =
 							opt_local->min_nodes;

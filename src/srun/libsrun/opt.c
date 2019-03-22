@@ -267,7 +267,6 @@ static slurm_opt_t *_opt_copy(void)
 
 	opt_dup->account = xstrdup(opt.account);
 	opt_dup->acctg_freq = xstrdup(opt.acctg_freq);
-	sropt.alloc_nodelist = NULL;	/* Moved by memcpy */
 	opt_dup->srun_opt->argv = xmalloc(sizeof(char *) * sropt.argc);
 	for (i = 0; i < sropt.argc; i++)
 		opt_dup->srun_opt->argv[i] = xstrdup(sropt.argv[i]);
@@ -439,7 +438,6 @@ static void _opt_default(void)
 	 * of the job/step. Do not use xfree() as the pointers have been copied.
 	 * See initialize_and_process_args() above.
 	 */
-	sropt.alloc_nodelist		= NULL;
 	opt.job_flags			= 0;
 	sropt.multi_prog_cmds		= 0;
 	sropt.pack_group		= NULL;
