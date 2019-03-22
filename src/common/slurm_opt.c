@@ -3727,8 +3727,14 @@ int slurm_process_option(slurm_opt_t *opt, int optval, const char *arg,
 		break;
 	}
 
-	if (!common_options[i])
-		return SLURM_ERROR;
+	/*
+	 * Not a Slurm internal option, so hopefully it's a SPANK option.
+	 */
+	if (!common_options[i]) {
+		if (spank_process_option(optval, arg))
+			exit(-1);
+		return SLURM_SUCCESS;
+	}
 
 	/*
 	 * Special handling for the early pass in sbatch.
@@ -3817,6 +3823,12 @@ int slurm_process_option(slurm_opt_t *opt, int optval, const char *arg,
 			return SLURM_SUCCESS;
 		}
 	}
+
+	/*
+	 * If we've made it here, then the set_func failed for some reason.
+	 * At which point we'll abandon ship.
+	 */
+	exit(-1);
 	return SLURM_ERROR;
 }
 
