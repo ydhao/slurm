@@ -11599,7 +11599,7 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 	List license_list = NULL;
 	List part_ptr_list = NULL;
 	uint32_t orig_time_limit;
-	bool gres_update = false;
+	bool gres_update = false, reset_reason = false;
 	slurmdb_assoc_rec_t *new_assoc_ptr = NULL, *use_assoc_ptr = NULL;
 	slurmdb_qos_rec_t *new_qos_ptr = NULL, *use_qos_ptr = NULL;
 	slurmctld_resv_t *new_resv_ptr = NULL;
@@ -12302,6 +12302,9 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 		job_ptr->qos_ptr = new_qos_ptr;
 		job_ptr->limit_set.qos = acct_policy_limit_set.qos;
 
+		if (job_ptr->state_reason == FAIL_QOS)
+			reset_reason = true;
+
 		info("%s: setting QOS to %s for %pJ",
 		     __func__, new_qos_ptr->name, job_ptr);
 	}
@@ -12312,6 +12315,9 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 		job_ptr->account = xstrdup(new_assoc_ptr->acct);
 		job_ptr->assoc_id = new_assoc_ptr->id;
 		job_ptr->assoc_ptr = new_assoc_ptr;
+
+		if (job_ptr->state_reason == FAIL_ACCOUNT)
+			reset_reason = true;
 
 		info("%s: setting account to %s for %pJ",
 		     __func__, job_ptr->account, job_ptr);
@@ -13341,26 +13347,20 @@ static int _update_job(struct job_record *job_ptr, job_desc_msg_t * job_specs,
 			error_code = ESLURM_REQUESTED_PART_CONFIG_UNAVAILABLE;
 
 		if (error_code != SLURM_SUCCESS) {
-			if ((job_ptr->state_reason != WAIT_HELD) &&
-			    (job_ptr->state_reason != WAIT_HELD_USER) &&
-			    (job_ptr->state_reason != WAIT_RESV_DELETED) &&
-			    ((job_ptr->state_reason != FAIL_ACCOUNT) &&
-			     !new_assoc_ptr) &&
-			    ((job_ptr->state_reason != FAIL_QOS) &&
-			     !new_qos_ptr)) {
+			if (reset_reason ||
+			    ((job_ptr->state_reason != WAIT_HELD) &&
+			     (job_ptr->state_reason != WAIT_HELD_USER) &&
+			     (job_ptr->state_reason != WAIT_RESV_DELETED))) {
 				job_ptr->state_reason = fail_reason;
 				xfree(job_ptr->state_desc);
 			}
 			goto fini;
 		}
-	} else if ((job_ptr->state_reason != WAIT_HELD)
-		   && (job_ptr->state_reason != WAIT_HELD_USER)
-		   && (job_ptr->state_reason != WAIT_RESV_DELETED)
-		   && (job_ptr->state_reason != WAIT_MAX_REQUEUE)
-		   && ((job_ptr->state_reason != FAIL_ACCOUNT)
-		       && !new_assoc_ptr)
-		   && ((job_ptr->state_reason != FAIL_QOS)
-		       && !new_qos_ptr)) {
+	} else if (reset_reason ||
+		   ((job_ptr->state_reason != WAIT_HELD)
+		    && (job_ptr->state_reason != WAIT_HELD_USER)
+		    && (job_ptr->state_reason != WAIT_RESV_DELETED)
+		    && (job_ptr->state_reason != WAIT_MAX_REQUEUE))) {
 		job_ptr->state_reason = WAIT_NO_REASON;
 	}
 
